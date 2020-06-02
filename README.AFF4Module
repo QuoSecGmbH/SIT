@@ -1,0 +1,18 @@
+Important: Only basic functionality! Not optimised, still includes extensive debug output, no error handling and no logging for the new
+           code. Currently doesn't have the ability to add files to existing images (most likely a bug from aff4imager).
+           
+Usage: 
+
+.\AFF4Module -h for input options
+
+Read in all files from C:/test to C:/test/image.aff4
+.\AFF4Module -i c:/test/* -o c:/test/image.aff4
+
+Read in all files from C:/test to C:/test/image.aff4 and add all metadata from meta.turtle to the AFF4 turtle.
+.\AFF4Module -m c:/test/turtle.meta -i c:/test/* -o c:/test/image.aff4
+/* See genericMETA.turtle at AFF4Module/templates for an example template. The path in the turtle.meta files needs to match
+the path for the files at which AFF4Module acquires the corresponding files. The metadata input turtle structure is very
+similar to the AFF4 central registry turtle. Files named genericMETA.turtle in the input path will be treated as metadata
+input, even if not specified by -m */
+
+           
