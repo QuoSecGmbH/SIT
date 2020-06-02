@@ -5,7 +5,7 @@ This tool is built to be used embedded into a DFIR ORC binary: https://github.co
 A general understanding of the DFIR ORC structure is beneficial. 
 The tool can also be run independently if so desired. 
 
-DFIR ORC is a framework for forensic artifact acquisition on live systems. It allows embedding already included acquisition tools and 
+DFIR ORC is a framework for forensic artifact acquisition on live systems. It allows of embedding already included acquisition tools and 
 external custom tools into a single portable binary. The external tools need to be windows executable binaries. 
 
 By default the DFIR ORC tools acquire artifacts, depending on their configuration, and drop them into 7z archives. 
