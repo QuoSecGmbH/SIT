@@ -1,5 +1,5 @@
 # SIT
-Selective Imaging Tool
+**Selective Imaging Tool**
 
 This tool is built to be used embedded into a DFIR ORC binary: https://github.com/DFIR-ORC/dfir-orc. 
 A general understanding of the DFIR ORC structure is beneficial. 
@@ -18,23 +18,24 @@ The general structure will be as follows:
 
 There will be three modules, each of them being standalone, portable windows executables. 
 
-Unification module: 
+**Unification module:** 
 - Checks if the output of the DFIR ORC tools is conforming to the configuration.
 - Checks if the metadata output is valid and if the associated artifacts exist.
 - Converts the metadata from multiple csv files (one from each tool) into one rdf turtle file with AFF4 tags.
 
-AFF4Module:
+**AFF4Module:**
 - Creates an AFF4, zip based, container.
 - Inserts all the artifacts into this container
 - Inserts the metadata rdf turtle into the central AFF4 rdf turtle registry.
 
-VerificationModule:
+**VerificationModule:**
 - Verifies each artifact in the AFF4 images with the hash codes collected by the DFIR ORC tools upon acquisition.
 - Checks the feedback from the previous modules and provides final feedback to the user if the partial image creation was successful
   and if the image is valid. If this is not the case, the user has the opportunity to the repeat the entire process with a different
   configuration, without having to do a manual pre analysis to determine if this necessary.
   
-Current progress: 
+**Current progress:** 
+
 Unification module [in work]
 
 AFF4Module [basic functionality done] // missing optimization, logging and error handling
