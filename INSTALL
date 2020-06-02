@@ -1,0 +1,12 @@
+**DFIR ORC :**
+https://github.com/DFIR-ORC/dfir-orc
+Follow the steps in the Build guide up to the point where the configuration process for the final binary can begin.
+
+**AFF4Module**
+https://github.com/Velocidex/c-aff4
+Download the repository and copy the contents of the AFF4Module folder into the main directory. To build the project for windows,
+follow the README.docker guide, as the README.windows process on linux is very unreliable.
+// The binaries folder includes an already compiled AFF4Module for testing purposes
+
+**DFIR ORC configuration**
+TODO
