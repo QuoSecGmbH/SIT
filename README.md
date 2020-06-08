@@ -1,7 +1,7 @@
 # SIT
 **Selective Imaging Tool**
 
-This tool will bridge the gap between the collection of artifacts and metadata on live systems and the creation of a valid partial image. This includes but is not limited to:
+This tool will bridge the gap between the collection of artifacts and metadata on live systems by the DFIR ORC framework, and the creation of a valid partial images as a Selective Imaging Framework. This includes but is not limited to:
 - Checking if artifacts were gathered as configured and necessary metadata is available
 - Storage in modern forensic AFF4 format 
 - Verification using hash codes
@@ -50,4 +50,5 @@ Note: The AFF4Module is based on the "c-aff4" project: https://github.com/Veloci
       the required notices for the modified code segments.
 
 VerificationModule [TODO]
+
 
