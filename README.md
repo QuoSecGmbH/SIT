@@ -1,7 +1,12 @@
 # SIT
 **Selective Imaging Tool**
 
-This tool is built to be used embedded into a DFIR ORC binary: https://github.com/DFIR-ORC/dfir-orc. 
+This tool will bridge the gap between the collection of artifacts and metadata on live systems and the creation of a valid partial image. This includes but is not limited to:
+- Checking if artifacts were gathered as configured and necessary metadata is available
+- Storage in modern forensic AFF4 format 
+- Verification using hash codes
+
+It is built to be used embedded into a DFIR ORC binary: https://github.com/DFIR-ORC/dfir-orc. 
 A general understanding of the DFIR ORC structure is beneficial. 
 The tool can also be run independently if so desired. 
 
@@ -13,6 +18,7 @@ This tool will start after these tools have finished their acquisition and compl
 This includes but is not limited to, validity checks for the metadata, creation of an AFF4 image, insertion of all the artifacts and 
 metadata into this image and hash verifications.
 
+![](https://raw.githubusercontent.com/QuoSecGmbH/SIT/master/Concept.png?token=APCTILFH7ZUFWNYFISX26HK63Y32O)
 
 The general structure will be as follows:
 
