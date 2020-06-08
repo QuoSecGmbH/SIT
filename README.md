@@ -1,17 +1,30 @@
 # SIT
 **Selective Imaging Tool**
 
-This tool will bridge the gap between the collection of artifacts and metadata on live systems by the DFIR ORC framework, and the creation of a valid partial images as a Selective Imaging Framework. This includes but is not limited to:
-- Checking if artifacts were gathered as configured and necessary metadata is available
-- Storage in modern forensic AFF4 format 
-- Verification using hash codes
+This tool will bridge the gap between the collection of artifacts and metadata on live systems by the DFIR ORC framework, and the creation of a valid partial images as a Selective Imaging Framework. 
 
-It is built to be used embedded into a DFIR ORC binary: https://github.com/DFIR-ORC/dfir-orc. 
-A general understanding of the DFIR ORC structure is beneficial. 
-The tool can also be run independently if so desired. 
+**Main Goals for creation of a Selective Imaging Framework**
+- Ability to gather forensic artifacts and metadata while maintaining forensic soundness [DFIR ORC]
+- Validity check to verify if the artifacts have been collected as configured and if the required metadata is available [SIT]
+- Storage in modern forensic container with central metadata registry [SIT]
+- Verification of all artifacts [SIT]
 
-DFIR ORC is a framework for forensic artifact acquisition on live systems. It allows of embedding already included acquisition tools and 
-external custom tools into a single portable binary. The external tools need to be windows executable binaries. 
+**Main SIT Goals**
+- Maintain forensic soundness
+  - Provide extensive documentation
+  - Ensure data integrity
+  - Provide verification
+  - Minimize footprint
+- Modularity
+  - Minimize modifications to DFIR ORC to ensure its modularity is maintained
+  - Three separate standalone modules, to allow easy replacement, modification and removal
+- Slim, easy to understand code and well commented code to support modifications
+
+The resulting framework will be a single portable DFIR ORC binary without dependencies. DFIR ORC repository: https://github.com/DFIR-ORC/dfir-orc. A general understanding of the DFIR ORC structure is beneficial for the configuration process. 
+
+SIT can also be run independently if so desired, to ensure that the operation on the live system can be as minimal as possible, at the cost of dropping some features of the tool.  
+
+DFIR ORC itself is a modular framework for forensic artifact acquisition on live systems. It allows embedding of already included acquisition tools and external custom tools into a single portable binary. The external tools need to be windows executable binaries. 
 
 By default the DFIR ORC tools acquire artifacts, depending on their configuration, and drop them into 7z archives. 
 This tool will start after these tools have finished their acquisition and complete the process to a partial image. 
