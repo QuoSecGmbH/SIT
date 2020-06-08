@@ -18,7 +18,7 @@ This tool will start after these tools have finished their acquisition and compl
 This includes but is not limited to, validity checks for the metadata, creation of an AFF4 image, insertion of all the artifacts and 
 metadata into this image and hash verifications.
 
-![](https://raw.githubusercontent.com/QuoSecGmbH/SIT/master/Concept.png?token=APCTILFH7ZUFWNYFISX26HK63Y32O)
+![](https://github.com/QuoSecGmbH/SIT/blob/master/Concept.png)
 
 The general structure will be as follows:
 
