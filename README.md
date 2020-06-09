@@ -1,10 +1,11 @@
 # SIT
 **Selective Imaging Tool**
 
-This tool will bridge the gap between the collection of artifacts and metadata on live systems by the DFIR ORC framework, and the creation of a valid partial images as a Selective Imaging Framework. 
+The goal is to create a Framework for Selective Imaging. To achieve this, the SIT tool will utilize the DFIR ORC framework for forensic artifact collection on live Windows systems. It will implement all the features necessary for this that are not provided by DFIR ORC and might modify certain parts of the framework to ensure all the requirements for valid partial images are met.
 
 **Main Goals for creation of a Selective Imaging Framework**
 - Ability to gather forensic artifacts and metadata while maintaining forensic soundness [DFIR ORC]
+  - Modifications to ensure forensic soundness and data integrity. Potentially a new tool variant for artifact collection [SIT]
 - Validity check to verify if the artifacts have been collected as configured and if the required metadata is available [SIT]
 - Storage in modern forensic container with central metadata registry [SIT]
 - Verification of all artifacts [SIT]
@@ -55,13 +56,14 @@ There will be three modules, each of them being standalone, portable windows exe
   
 **Current progress:** 
 
-Unification module [in work]
+Unification module **[WIP]** // missing optimization, logging and error handling; Only works for GetThis output so far and missing cl input
 
-AFF4Module [basic functionality done] // missing optimization, logging and error handling
+AFF4Module **[WIP]** // missing optimization, logging and error handling
 Note: The AFF4Module is based on the "c-aff4" project: https://github.com/Velocidex/c-aff4 .
       It adds several features, mainly the ability to add custom metadata in the form of rdf turtle files. The code does NOT yet have 
       the required notices for the modified code segments.
 
-VerificationModule [TODO]
+VerificationModule **[TODO]**
 
+DFIR-ORC artifact collection tool modifications **[TODO]**
 
