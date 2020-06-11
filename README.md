@@ -4,11 +4,11 @@
 The goal is to create a Framework for Selective Imaging. To achieve this, the SIT tool will utilize the DFIR ORC framework for forensic artifact collection on live Windows systems. It will implement all the features necessary for this that are not provided by DFIR ORC and might modify certain parts of the framework to ensure all the requirements for valid partial images are met.
 
 **Main Goals for creation of a Selective Imaging Framework**
-- Ability to gather forensic artifacts and metadata while maintaining forensic soundness [DFIR ORC]
-  - Modifications to ensure forensic soundness and data integrity. Potentially a new tool variant for artifact collection [SIT]
-- Validity check to verify if the artifacts have been collected as configured and if the required metadata is available [SIT]
-- Storage in modern forensic container with central metadata registry [SIT]
-- Verification of all artifacts [SIT]
+- Tools to gather forensic artifacts and metadata while maintaining forensic soundness **[DFIR ORC]**
+  - Various expansions and changes to documentation and examiner feedback for forensic soundness and to better suit Selective Imaging **[SIT]**
+- Validity check to verify if the artifacts have been collected as configured and if the required metadata is available **[SIT]**
+- Storage in modern forensic container with central metadata registry **[SIT]**
+- Verification of all artifacts **[SIT]**
 
 **Main SIT Goals**
 - Maintain forensic soundness
@@ -23,12 +23,12 @@ The goal is to create a Framework for Selective Imaging. To achieve this, the SI
 
 The resulting framework will be a single portable DFIR ORC binary without dependencies. DFIR ORC repository: https://github.com/DFIR-ORC/dfir-orc. A general understanding of the DFIR ORC structure is beneficial for the configuration process. 
 
-SIT can also be run independently if so desired, to ensure that the operation on the live system can be as minimal as possible, at the cost of dropping some features of the tool.  
+The SIT modules can also be run independently if so desired, to ensure that the operation on the live system can be as minimal as possible, at the cost of dropping some features of the tool.  
 
 DFIR ORC itself is a modular framework for forensic artifact acquisition on live systems. It allows embedding of already included acquisition tools and external custom tools into a single portable binary. The external tools need to be windows executable binaries. 
 
-By default the DFIR ORC tools acquire artifacts, depending on their configuration, and drop them into 7z archives. 
-This tool will start after these tools have finished their acquisition and complete the process to a partial image. 
+By default the DFIR ORC tools acquire artifacts, depending on their configuration, and drop them into 7z archives. Since documentation is very important for forensic soundness, there will be expanded documentation for these tools as well as additions to runtime feedback for the examiner to provide important information about the status of the selective imaging process.  
+The SIT main modules will start after these tools have finished their acquisition and complete the process to a partial image. 
 This includes but is not limited to, validity checks for the metadata, creation of an AFF4 image, insertion of all the artifacts and 
 metadata into this image and hash verifications.
 
@@ -36,7 +36,10 @@ metadata into this image and hash verifications.
 
 The general structure will be as follows:
 
-There will be three modules, each of them being standalone, portable windows executables. 
+**Acquisition tools changes**
+- Expand tool documentation
+- Expand tool feedback to examiner on execution 
+- Review forensic soundness aspects 
 
 **Unification module:** 
 - Checks if the output of the DFIR ORC tools is conforming to the configuration.
@@ -55,6 +58,8 @@ There will be three modules, each of them being standalone, portable windows exe
   configuration, without having to do a manual pre analysis to determine if this necessary.
   
 **Current progress:** 
+
+Acquisition tools changes **[WIP]** 
 
 Unification module **[WIP]** // missing optimization, logging and error handling; Only works for GetThis output so far and missing cl input
 
