@@ -36,17 +36,19 @@ metadata into this image and hash verifications.
 
 The general structure will be as follows:
 
-**Acquisition tools changes**
+**ArtifactModule**
+- Based on GetThis ORC tool
 - Expand tool documentation
 - Expand tool feedback to examiner on execution 
 - Review forensic soundness aspects 
 
-**Unification module:** 
+**UnificationModule:** 
 - Checks if the output of the DFIR ORC tools is conforming to the configuration.
 - Checks if the metadata output is valid and if the associated artifacts exist.
 - Converts the metadata from multiple csv files (one from each tool) into one rdf turtle file with AFF4 tags.
 
 **AFF4Module:**
+- Based on c-aff4imager
 - Creates an AFF4, zip based, container.
 - Inserts all the artifacts into this container
 - Inserts the metadata rdf turtle into the central AFF4 rdf turtle registry.
@@ -59,9 +61,9 @@ The general structure will be as follows:
   
 **Current progress:** 
 
-Acquisition tools changes **[WIP]** 
+ArtifactModule **[WIP]** 
 
-Unification module **[WIP]** // missing optimization, logging and error handling; Only works for GetThis output so far and missing cl input
+Unification module **[WIP]** // missing optimization, logging and error handling
 
 AFF4Module **[WIP]** // missing optimization, logging and error handling
 Note: The AFF4Module is based on the "c-aff4" project: https://github.com/Velocidex/c-aff4 .
