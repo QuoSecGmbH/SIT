@@ -1,0 +1,8 @@
+The following files were modified:
+
+configure.ac
+Makefile.am
+	aff4/aff4_imager_utils.cc
+	aff4_imager_utils.h
+	lexicon.inc
+	Makefile.am
