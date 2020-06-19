@@ -26,13 +26,13 @@ SOFTWARE. */
 
 
 /* Oversees the insertion of metadataSerialized into turtle at path. If no turtle exists, it is created. */
-bool ConversionRDF(std::string path, std::vector<std::vector<std::vector<std::string>>> metadataSerialized);
+bool ConversionRDF(std::string path, std::vector<std::vector<std::vector<std::string>>> metadataSerialized, std::vector <std::string>& artifacts);
 
 /* Creates a new AFF4 turtle */
 bool createTurtle(std::string path);
 
 /* Inserts one or more serialized metadata files into an AFF4 turtle */
-bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadataSerialized, std::string path);
+bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadataSerialized, std::string path, std::vector <std::string>& artifacts);
 
 /* The name for the turtleFile */
 extern std::string turtleName;

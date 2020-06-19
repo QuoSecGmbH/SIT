@@ -27,12 +27,13 @@ SOFTWARE. */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "MetadataVerification.h"
+#include "MetadataSerialization.h"
 
 
 std::string ORCOutputDirectoryPath;
 
 /*Oversees all tool output verifications*/
-std::vector<std::vector<std::string>> MainVerification(std::vector<std::string>ToolsToVerify, std::vector<std::vector<std::string>>InputForVerification) {
+std::vector<std::vector<std::string>> MainVerification(std::vector<std::string>ToolsToVerify, std::vector<std::string>&Samples,std::string Path) {
 	
 	// One std::vector<std::string> for each Tool to check -> If empty except for Tool name then no failure 
 	std::vector<std::vector<std::string>>FailedVerifications; // Includes all tools with failed output verification
@@ -41,7 +42,12 @@ std::vector<std::vector<std::string>> MainVerification(std::vector<std::string>T
 	std::vector<std::string> buffer;
 	std::vector<std::string> functionBuffer;
 
-	ORCOutputDirectoryPath= GetORCOutputDirectory();
+	std::cout << "Path at MainVerification: " << Path << "\n";
+
+	if (!(Path.empty())) ORCOutputDirectoryPath = Path;
+	/*else {
+		ORCOutputDirectoryPath = GetORCOutputDirectory();
+	}*/
 	std::cout << "ORCOutputDirectoryPath: " << ORCOutputDirectoryPath << "\n";
 
 	if (!(CheckIfDirectoryExists(ORCOutputDirectoryPath))) return FailedVerifications; // TODO return error
@@ -50,7 +56,7 @@ std::vector<std::vector<std::string>> MainVerification(std::vector<std::string>T
 	for (std::string Tool : ToolsToVerify) {
 		if (Tool == "GetThis") {
 			// Holds the resulting <std::vector<std::string> from {Tool} output verification
-			functionBuffer = GetThisVerification(InputForVerification[counter]);
+			functionBuffer = GetThisVerification(Samples);
 			
 			//{Tool} string signals beginning of {Tool} section
 			buffer.push_back(Tool);
@@ -65,46 +71,14 @@ std::vector<std::vector<std::string>> MainVerification(std::vector<std::string>T
 			// Insert the buffer into FailedVerifications for output
 			FailedVerifications.push_back(buffer);
 		}
-		/*if (Tool == "GetSamples") {
-			if (!(GetSamplesVerification(InputForVerification[counter]))) FailedVerifications.push_back(Tool);
-		}
-		if (Tool == "GetSectors") {
-			if (!(GetSectorsVerification(InputForVerification[counter]))) FailedVerifications.push_back(Tool);
-		}
-		if (Tool == "RegInfo") {
-			if (!(RegInfoVerification(InputForVerification[counter]))) FailedVerifications.push_back(Tool);
-		}
-		if (Tool == "FastFind") {
-			if (!(FastFindVerification(InputForVerification[counter]))) FailedVerifications.push_back(Tool);
-		}
-		if (Tool == "FatInfo") {
-			if (!(FatInfoVerification(InputForVerification[counter]))) FailedVerifications.push_back(Tool);
-		}
-		if (Tool == "NTFSInfo") {
-			if (!(NTFSInfoVerification(InputForVerification[counter]))) FailedVerifications.push_back(Tool);
-		}
-		if (Tool == "USNInfo") {
-			if (!(USNInfoVerification(InputForVerification[counter]))) FailedVerifications.push_back(Tool);
-		}
-		if (Tool == "ObjInfo") {
-			if (!(ObjInfoVerification(InputForVerification[counter]))) FailedVerifications.push_back(Tool);
-		}
-		if (Tool == "UnknownTool") {
-			if (!(UnknownToolVerification(InputForVerification[counter]))) FailedVerifications.push_back(Tool);
-		}*/
 		counter++;
 	}
-	
-
-
-
-
 	/* Returns the list of failed Verifications */
 	return FailedVerifications;
 }
 
-/* Tools that output files and metadata */
-std::vector<std::string> GetThisVerification(std::vector<std::string> InputForVerification) {
+/* Tool that collects files and metadata */
+std::vector<std::string> GetThisVerification(std::vector<std::string>& samples) {
 	
 	/* Holds the metdatafile name with identifiers (<{metadatafile}.csv>) if not found, without identifiers {metadatafile}.csv if found, as well as the name of each sample 
 		Example output: "GetThis.csv""sample1""<sample2>" 
@@ -115,6 +89,9 @@ std::vector<std::string> GetThisVerification(std::vector<std::string> InputForVe
 	
 	// Path to the current sample from InputForVerification
 	std::string samplePath;
+
+	// Contains all the samples from GetThis.csv
+	//std::vector<std::string> samples;
 	
 	//Used for constructing samplePath
 	std::string tmpPath;
@@ -125,18 +102,12 @@ std::vector<std::string> GetThisVerification(std::vector<std::string> InputForVe
 	// Files that could not be found
 	//std::vector<std::string> unlocatedFiles; 
 
-	// TODO REMOVE ONLY DEBUG
-	//std::vector<std::string> tmp;
-
-	//Used to construct output
-	//std::vector<std::string> CheckOutput;
-
-	// Check if metadataName file exists and if it contains valid metadata
+	// Check if GetThis.csv file exists and if it contains valid metadata
 	tmpFile.push_back(metadataName);
+	
 	// CheckIfFilesExist method returns all the files that do exist from the input
 	tmpFile = CheckIfFilesExist(ORCOutputDirectoryPath, tmpFile);
 	
-
 	if (std::find(tmpFile.begin(),tmpFile.end(),metadataName)!= tmpFile.end()) {
 		// Identifier if metadataName file was not found
 		output.push_back("<" + metadataName + ">");
@@ -162,10 +133,32 @@ std::vector<std::string> GetThisVerification(std::vector<std::string> InputForVe
 		}
 	}
 
-	// TODO check if files from metadata exist MAYBE
+	// Sample directory
+	std::string filteredSample;
+
+	// Add samples to vector
+	for (std::vector <std::string> file : metadataStrings[0]) {
+		if (file[5] == "SampleName") continue;
+
+			
+		if (file[5].size() != 0) {
+			filteredSample = file[5].substr(1,file[5].find("\\")-1);
+			// Check if samples already included in samples vector
+			if (std::find(samples.begin(), samples.end(), filteredSample) == samples.end()) {
+				samples.push_back(filteredSample);
+				std::cout << "GetThisVerification samples, sample: " << filteredSample << "\n";
+			}
+		}
+		else {
+			// TODO ERROR NO SAMPLE NAME
+		}
+	}
+	
+		
+	// TODO check if files from metadata exist
 
 	// Check if all the samples from InputForVerification are available as folders
-	for (std::string sample : InputForVerification) {
+	for (std::string sample : samples) {
 
 		tmpPath="\\"; // Represents "\"
 		tmpPath.append(sample);
@@ -175,29 +168,11 @@ std::vector<std::string> GetThisVerification(std::vector<std::string> InputForVe
 		
 		// Check if folder with name {sample} available
 		if (CheckIfDirectoryExists(samplePath)) { 
-			//samplePath.append("\\");
-			//samplePath.append("test.txt,test2.txt,test3.txt")
-
-			/*// Only for testing TODO REMOVE
-			tmp.push_back("test.txt");
-			tmp.push_back("test2.txt");
-			tmp.push_back("test3.txt");*/
-			
-			//CheckOutput = CheckIfFilesExist(samplePath, tmp);
-			
-			// Signals beginning of {sample} section
-			//output.push_back("<BOS>");
 
 			// Insert {sample} to identify the sample from which the files might be missing
 			output.push_back(sample);
 			
 			std::cout << "sample directory in GetThisVerification loop FOUND: " << sample << "\n";
-
-			// Insert the missing files into output
-			//output.insert(output.end(), CheckOutput.begin(), CheckOutput.end());
-
-			// Signals end of this {sample}'s section
-			//output.push_back("<EOS>");
 				
 			/*if (true) { // Check if files in folder {ORCOutputFolder} match {ntfs_find path match} pattern
 				//CheckIfDirectoryExists(ORCOutputDirectoryPath);
@@ -210,12 +185,9 @@ std::vector<std::string> GetThisVerification(std::vector<std::string> InputForVe
 			}*/
 		}
 		
-		// Sample directory doesnt exist
+		// Sample directory does not exist
 		else {
-			
-			
-			// Signals beginning of {sample} section
-			//output.push_back("<BOS>");
+
 
 			// Failed samples will have <{sample}> identifiers
 			std::string failedSample;
@@ -225,12 +197,7 @@ std::vector<std::string> GetThisVerification(std::vector<std::string> InputForVe
 			output.push_back(failedSample);
 
 			std::cout << "sample directory in GetThisVerification loop NOT FOUND: " << sample << "\n";
-			
-
-			// Signals end of this {sample}'s section
-			//output.push_back("<EOS>");
-
-
+		
 		}
 		
 	}
@@ -240,51 +207,7 @@ std::vector<std::string> GetThisVerification(std::vector<std::string> InputForVe
 	// Returns vector with sections for each sample, with either its missing files or identifiers to signal missing sample directory
 	return output;
 }
-std::vector<std::string> GetSamplesVerification(std::vector<std::string> InputForVerification) {
-	//TODO
-	std::vector<std::string> output;
-	return output;
 
-}
-std::vector<std::string> GetSectorsVerification(std::vector<std::string> InputForVerification) {
-	//TODO
-	std::vector<std::string> output;
-	return output;
-}
-std::vector<std::string> RegInfoVerification(std::vector<std::string> InputForVerification) {
-	//TODO
-	std::vector<std::string> output;
-	return output;
-}
-
-/* Tools that output files only */
-std::vector<std::string> FastFindVerification(std::vector<std::string> InputForVerification) {
-	//TODO
-	std::vector<std::string> output;
-	return output;
-}
-
-/* Tools that ouput metadata only */
-std::vector<std::string> FatInfoVerification(std::vector<std::string> InputForVerification) {
-	//TODO
-	std::vector<std::string> output;
-	return output;
-}
-std::vector<std::string> NTFSInfoVerification(std::vector<std::string> InputForVerification) {
-	//TODO
-	std::vector<std::string> output;
-	return output;;
-}
-std::vector<std::string> USNInfoVerification(std::vector<std::string> InputForVerification) {
-	//TODO
-	std::vector<std::string> output;
-	return output;
-}
-std::vector<std::string> ObjInfoVerification(std::vector<std::string> InputForVerification) {
-	//TODO
-	std::vector<std::string> output;
-	return output;
-}
 
 /* Tools that may output anything */
 std::vector<std::string> UnknownToolVerification(std::vector<std::string> InputForVerification) {
@@ -319,37 +242,6 @@ std::vector<std::string> CheckIfFilesExist(std::string path, std::vector<std::st
 	std::string file;
 
 	std::vector<std::string> output;
-	
-	
-	/*while (!(files.empty())) {
-		file = files.substr(0, files.find(',')); // file is first substr in files up to first ',' 
-		pathFile = path;
-
-		//Change to loop for every file in files
-		pathFile.append("\\");
-
-		pathFile.append(file);
-
-		std::cout << "file : " << file << "\n";
-		std::cout << "files : " << files << "\n";
-		std::cout << "CheckIfFilesExist pathFile: " << pathFile << "\n";
-
-		// Conver string pathFile to LPCWSTR pathC
-		std::wstring pathW = s2ws(pathFile);
-		LPCWSTR pathC = pathW.c_str();
-
-		GetFileAttributes(pathC); // from winbase.h
-		if (INVALID_FILE_ATTRIBUTES == GetFileAttributes(pathC) && GetLastError() == ERROR_FILE_NOT_FOUND)
-		{
-			//File not found 
-			std::cout << "File not found : " << pathFile << "\n";
-
-			//TODO CHECK FOR POSSIBLE ERRORS
-		}
-
-		files.erase(0, files.find(',')+1); // Erase first string from files
-		std::cout << "files after erasing first file : " << files << "\n";
-	}*/
 
 	for (std::string file : files) {
 		pathFile = path;
@@ -360,7 +252,6 @@ std::vector<std::string> CheckIfFilesExist(std::string path, std::vector<std::st
 		pathFile.append(file);
 
 		std::cout << "CheckIfFilesExist() :  file: " << file << " pathFile: "<< pathFile <<"\n";
-
 
 		// Conver string pathFile to LPCWSTR pathC
 		std::wstring pathW = s2ws(pathFile);
@@ -374,9 +265,7 @@ std::vector<std::string> CheckIfFilesExist(std::string path, std::vector<std::st
 			output.push_back(file);
 			//TODO CHECK FOR POSSIBLE ERRORS
 		}
-	}
-
-	
+	}	
 
 	// Returns string with all the files that were not found
 	return output;

@@ -28,12 +28,9 @@ SOFTWARE. */
 
 
 std::string turtleName = "genericMETA.turtle";
-
 std::string turtleHeaders = std::string("@id <aff4:metadata> .").append("\n").append(std::string("@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .").append("\n").append(std::string("@prefix aff4: <http://aff4.org/Schema#> .").append("\n").append(std::string("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .").append("\n"))));
 
-
-
-bool ConversionRDF(std::string path, std::vector<std::vector<std::vector<std::string>>> metadataSerialized) {
+bool ConversionRDF(std::string path, std::vector<std::vector<std::vector<std::string>>> metadataSerialized, std::vector <std::string>& artifacts) {
 	// std::vector<std::string> CheckIfFilesExist(std::string path, std::vector<std::string> files);
 	std::vector<std::string> turtle;
 	turtle.push_back(turtleName);
@@ -47,16 +44,12 @@ bool ConversionRDF(std::string path, std::vector<std::vector<std::vector<std::st
 
 	// turtle does not exist at path
 	if (turtle.size() >= 1 && turtle[0] == turtleName) {
-		// Create new turtle
-
-		
+		// Create new turtle		
 		std::cout << "ConversionRDF() create turtleName: "<< turtleName<<" at path : "<<turtlePath<< "\n";
 		if (!(createTurtle(turtlePath))) return false; // TODO ERROR HANDLING
-	}
-	
+	}	
 
-	if (!(insertIntoTurtle(metadataSerialized, turtlePath))) return false; // TODO ERROR HANDLING
-
+	if (!(insertIntoTurtle(metadataSerialized, turtlePath,artifacts))) return false; // TODO ERROR HANDLING
 	
 	return true;
 }
@@ -74,7 +67,7 @@ bool createTurtle(std::string path) {
 	return true;
 }
 
-bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadataSerialized, std::string path) {
+bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadataSerialized, std::string path, std::vector <std::string>& artifacts) {
 
 	// Open turtle stream
 	std::ofstream turtleStream;
@@ -85,7 +78,17 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 
 	// TODO DIFFERENCES BETWEEN TOOLS
 
+	// TODO REPLACE BACKSLASH WITH FORWARDSLASH
 	
+	// Isolate outputDirectory from path
+	std::string outputDirectory = path;
+	while (outputDirectory.find('/') != std::string::npos) {
+		outputDirectory = outputDirectory.substr(outputDirectory.find('/') + 1);
+	}
+	
+	// TODO CHANGE FOR GENERIC METADATA FILE NAME
+	outputDirectory = outputDirectory.substr(0, outputDirectory.find("\\"));
+	std::cout <<" insertIntoTurtle(): outputDirectory filtered: "<< outputDirectory << "\n";
 
 	for (std::vector<std::vector<std::string>> toolMetadata : metadataSerialized) {
 		// toolMetadata is metadata from one tool
@@ -93,10 +96,16 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 
 		// Prepare path identifier "</file:/path/to/file.txt>"
 		std::string pathIdentifierGeneric = "</file:";
-		// Path to main output directory
+		// Add main output directory relative path
+		pathIdentifierGeneric.append(outputDirectory);
+		pathIdentifierGeneric.append("/");
+		//pathIdentifierGeneric.append(path.substr();
+		// Contains absolute path for artifact WITH sample folder
+		std::string artifactAbsolutePath;
 		
-		// Path without turtleName
-		pathIdentifierGeneric.append(path.substr(0, path.find(turtleName)));
+		// Path without turtleName -> necessary if using absolute paths
+		//pathIdentifierGeneric.append(path.substr(0, path.find(turtleName)));
+		
 		// Tool identifier
 		std::string tool = toolMetadata[toolMetadata.size()-1][0];
 		std::cout <<" toolMetadata tool: "<<tool<<"\n";
@@ -122,8 +131,23 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 
 				pathIdentifier = pathIdentifierGeneric;
 
-				// Contains the sample path to the file itself, without the " " symbols
-				if (pathIdentifier.size() >= 6) pathIdentifier.append(file[5].substr(1,file[5].length()-2));
+				// Contains the path to the file itself without sample folder, without the " " symbols
+				if (pathIdentifier.size() >= 6) pathIdentifier.append(file[5].substr(file[5].find("\\") + 1, (file[5].length() - 2) - (file[5].find("\\"))));
+				
+				artifactAbsolutePath = path.substr(0, path.find(turtleName));
+				artifactAbsolutePath.append(file[5].substr(1, file[5].length() - 2));
+				
+				// Replace both backslashes with forwardslashes 
+				if (artifactAbsolutePath.find("\\")) artifactAbsolutePath[artifactAbsolutePath.find("\\")] = '/';
+				//if (artifactAbsolutePath.find("\\")) artifactAbsolutePath[artifactAbsolutePath.find("\\")] = '/';
+
+				// Adds current absolute path for artifact to vector for image selection
+				artifacts.push_back(artifactAbsolutePath);
+
+				// Replace backslash with forwardslash 
+				if (pathIdentifier.find("\\") != std::string::npos) pathIdentifier[pathIdentifier.find("\\")] = '/';
+
+				std::cout << " insertIntoTurtle() artifactAbsolutePath: BEFORE  " << file[5].substr(file[5].find("\\") + 1, (file[5].length() - 2)- (file[5].find("\\"))) << "\n";
 
 				pathIdentifier.append(">");
 
@@ -131,14 +155,10 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 
 				// Add pathIdentifier for file
 				turtleStream << pathIdentifier << "\n\n";
-
-				// TODO remove
 				
 			}
 
 			std::cout << " insertIntoTurtle(): file size(): "<<file.size() << "\n";
-
-
 			
 			if (counter >= 1) {
 
@@ -155,23 +175,16 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 					turtleStream << "\t" <<"aff4:" << toolMetadata[0][elementCounter] << "\t" << element;
 
 					if (true) turtleStream << "^^xsd:string" << ';' << "\n";
-
 					
 					std::cout << "insertIntoTurtle(): elementCounter: "<<elementCounter<< "\n";
-
-
 
 					elementCounter++;
 				}
 
 			}
-			counter++;
-			
-			// TODO REMOVE
-			if (counter == 5) break;
+			counter++;		
 
 		}
-		std::cout << "Test output after break " << "\n";
 	}
 
 	// Close turtle stream
