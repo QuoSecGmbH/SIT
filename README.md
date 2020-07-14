@@ -13,7 +13,7 @@ Create a Framework for Selective Imaging on Live Windows systems.
 
 **Advantages over stock DFIR ORC**
 - Improved documentation and examiner feedback to allow undelayed reaction to unexpected behavior or unsuccessful / incomplete results. 
-- Appropriate storage with metadata as central concern, not afterthough.
+- Appropriate storage with metadata as central concern, not afterthought.
 - Extensive verification
 
 **SIT development goals**
