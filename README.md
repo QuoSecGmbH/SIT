@@ -1,16 +1,22 @@
 # SIT
 **Selective Imaging Tool**
 
-The goal is to create a Framework for Selective Imaging. To achieve this, the SIT tool will utilize the DFIR ORC framework for forensic artifact collection on live Windows systems. It will implement all the features necessary for this that are not provided by DFIR ORC and might modify certain parts of the framework to ensure all the requirements for valid partial images are met.
+**Goal:** 
+Create a Framework for Selective Imaging on Live Windows systems.
 
-**Main Goals for creation of a Selective Imaging Framework**
-- Tools to gather forensic artifacts and metadata while maintaining forensic soundness **[DFIR ORC]**
-  - Various expansions and changes to documentation and examiner feedback for forensic soundness and to better suit Selective Imaging **[SIT]**
-- Validity check to verify if the artifacts have been collected as configured and if the required metadata is available **[SIT]**
-- Storage in modern forensic container with central metadata registry **[SIT]**
-- Verification of all artifacts **[SIT]**
+**How it works** 
+1. Creation of one single configured portable binary without external dependencies, based on DFIR ORC framework. 
+2. File artifacts collected by a modified version of the GetThis DFIR ORC tool **[ArtifactModule]**. Modifications focused on extended documentation and user feedback for forensic soundness.
+3. Collected artifacts checked for conformity to selection parameters to detect unwanted behavior and verify metadata for each artifact. Conversion of metadata from CSV to RDF format for next step **[UnificationModule]**.
+4. Storage in forensic AFF4 format with central metadata registry for each artifact **[AFF4Module]**.
+5. Verification of all artifacts using SHA1 and MD5 hash codes **[VerificationModule]**.
 
-**Main SIT Goals**
+**Advantages over stock DFIR ORC**
+- Improved documentation and examiner feedback to allow undelayed reaction to unexpected behavior or unsuccessful / incomplete results. 
+- Appropriate storage with metadata as central concern, not afterthough.
+- Extensive verification
+
+**SIT development goals**
 - Maintain forensic soundness
   - Provide extensive documentation
   - Ensure data integrity
@@ -21,16 +27,11 @@ The goal is to create a Framework for Selective Imaging. To achieve this, the SI
   - Three separate standalone modules, to allow easy replacement, modification and removal
 - Slim, easy to understand code and well commented code to support modifications
 
-The resulting framework will be a single portable DFIR ORC binary without dependencies. DFIR ORC repository: https://github.com/DFIR-ORC/dfir-orc. A general understanding of the DFIR ORC structure is beneficial for the configuration process. 
-
-The SIT modules can also be run independently if so desired, to ensure that the operation on the live system can be as minimal as possible, at the cost of dropping some features of the tool.  
+DFIR ORC repository: https://github.com/DFIR-ORC/dfir-orc. A general understanding of the DFIR ORC structure is beneficial for the configuration process. 
 
 DFIR ORC itself is a modular framework for forensic artifact acquisition on live systems. It allows embedding of already included acquisition tools and external custom tools into a single portable binary. The external tools need to be windows executable binaries. 
 
-By default the DFIR ORC tools acquire artifacts, depending on their configuration, and drop them into 7z archives. Since documentation is very important for forensic soundness, there will be expanded documentation for these tools as well as additions to runtime feedback for the examiner to provide important information about the status of the selective imaging process.  
-The SIT main modules will start after these tools have finished their acquisition and complete the process to a partial image. 
-This includes but is not limited to, validity checks for the metadata, creation of an AFF4 image, insertion of all the artifacts and 
-metadata into this image and hash verifications.
+The SIT modules can also be run independently if so desired, to ensure that the operation on the live system can be as minimal as possible, at the cost of dropping some features of the tool.  
 
 ![](https://github.com/QuoSecGmbH/SIT/blob/master/Concept.png)
 
@@ -38,9 +39,9 @@ The general structure will be as follows:
 
 **ArtifactModule**
 - Based on GetThis ORC tool
-- Expand tool documentation
-- Expand tool feedback to examiner on execution 
-- Review forensic soundness aspects 
+- Expanded tool documentation
+- Expanded tool feedback to examiner on execution 
+- Reviewed forensic soundness aspects 
 
 **UnificationModule:** 
 - Checks if the output of the DFIR ORC tools is conforming to the configuration.
@@ -70,7 +71,6 @@ Note: The AFF4Module is based on the "c-aff4" project: https://github.com/Veloci
       It adds several features, mainly the ability to add custom metadata in the form of rdf turtle files. The code does NOT yet have 
       the required notices for the modified code segments.
 
-VerificationModule **[TODO]**
+VerificationModule **[WIP]**
 
-DFIR-ORC artifact collection tool modifications **[TODO]**
 
