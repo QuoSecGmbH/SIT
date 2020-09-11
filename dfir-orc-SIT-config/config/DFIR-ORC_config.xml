@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wolf childdebug="no" command_timeout="600">
+    <log disposition="truncate">DFIR-ORC-SIT_{SystemType}_{FullComputerName}_{TimeStamp}.log</log>
+
+    <archive name="ArtifactsBackup.7z" keyword="ArtifactAcquisition" concurrency="2" repeat="Once" compression="none" >
+        <restrictions JobMemoryLimit="3G" ProcessMemoryLimit="2G" ElapsedTimeLimit="360"/>
+
+	<command keyword="ArtifactModule">
+            <execute name="DFIR-Orc.exe" run="self:#GetThis"/>
+            <argument>/config=res:#ArtifactModule_config.xml</argument>
+            <output name="ArtifactModule.7z" source="File" argument="/out={FileName}"/>
+            <output name="ArtifactModule.log" source="StdOutErr"/>
+		</command>
+
+    </archive>
+
+    <archive name="PartialImageStatistics.7z" keyword="PartialImage" concurrency="1" repeat="Once" compression="fast" archive_timeout="240">
+        <restrictions JobMemoryLimit="3G" ProcessMemoryLimit="3G" ElapsedTimeLimit="240"/>
+
+          <command keyword="ArchiveHandlerOuter">
+            <execute name="7zr.exe" run="7z:#Tools|7zr.exe"/>
+            <argument> -aoa x ArtifactsBackup.7z -otempSIT -r</argument>
+	    <output name="ArchiveHandlerOuterError.log" source="StdOutErr"/>
+          </command>  
+
+          <command keyword="ArchiveHandlerInner">
+	    <execute name="7zr.exe" run="7z:#Tools|7zr.exe"/>
+            <argument> x -an -aoa -air!ArtifactModule.7z -otempSIT</argument>
+	    <output name="ArchiveHandlerInnerError.log" source="StdOutErr"/>
+          </command>           
+
+	  <command keyword="ValidationModule">
+            <execute name="ValidationModule.exe" run="7z:#Tools|ValidationModule.exe"/>
+	    <argument>/tempSIT </argument>
+          </command>
+
+	  <command keyword="AFF4Module">
+            <execute name="AFF4Module.exe" run="7z:#Tools|AFF4Module.exe"/>
+            <argument> -d -v --relative -i tempSIT/* -o PartialImage.aff4 </argument>
+          </command>
+
+	  <command keyword="VerificationModule">
+            <execute name="AFF4Module.exe" run="7z:#Tools|AFF4Module.exe"/>
+            <argument> --temp tempSIT --hash PartialImage.aff4 </argument>
+          </command>
+    </archive>
+</wolf>

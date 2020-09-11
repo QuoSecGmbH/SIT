@@ -1,0 +1,8 @@
+# INSTALL instructions
+
+Requirement: VisualStudio (tested on VisualStudio 2019 Community)
+
+Project properties:
+	Build for platform Win32
+	C/C++ language settings to as Default
+	Code Generation runtime library to Multi-threaded(/MT)

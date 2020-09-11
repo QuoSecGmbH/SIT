@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<toolembed>
+    <input>.\tools\DFIR-Orc_x86.exe</input>
+    <output>.\output\%ORC_OUTPUT%</output>
+
+    <run64 args="WolfLauncher">7z:#Tools|DFIR-Orc_x64.exe</run64>
+    <run32 args="WolfLauncher">self:#</run32>
+
+    <file name="WOLFLAUNCHER_CONFIG" path=".\%ORC_CONFIG_FOLDER%\DFIR-ORC_config.xml"/>
+
+    <file name="ArtifactModule_config.xml" path=".\%ORC_CONFIG_FOLDER%\ArtifactModule_config.xml"/>
+
+    <archive name="Tools" format="7z" compression="Ultra">
+        <file name="DFIR-Orc_x64.exe" path=".\tools\DFIR-Orc_x64.exe"/>
+	<file name="ValidationModule.exe" path=".\tools\ValidationModule.exe"/>
+	<file name="AFF4Module.exe" path=".\tools\AFF4Module.exe"/>
+	<file name="7zr.exe" path=".\tools\7zr.exe"/>
+
+    </archive>
+</toolembed>
