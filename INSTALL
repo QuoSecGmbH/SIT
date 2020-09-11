@@ -1,0 +1,22 @@
+## INSTALL and configuration guide
+
+# Compatibility
+Tested on Windows XP SP3 and newer (state: 2020).
+
+# Build
+1. dfir-orc-SIT-patch/README.md to build dfir-orc-SIT framework
+2. ValidationModule/INSTALL to build ValidationModule.exe
+3. AFF4Module/INSTALL to build AFF4Module.exe
+
+# Default configuration
+1. Enter dfir-orc-SIT-configuration
+2. The following tools need to be available in /tools:
+	7zr.exe (download at https://www.7-zip.org/download.html)
+	DFIR-Orc_x64.exe
+	DFIR-Orc_x86.exe
+	ValidationModule.exe
+	AFF4Module.exe
+3. Configure artifact samples to collect in config/ArtifactModule_config.xml 
+	Guide: https://dfir-orc.github.io/configuring_ntfs_opt.html
+4. Execute Configur.cmd from the command line
+5. SIT.exe should be available in /output
