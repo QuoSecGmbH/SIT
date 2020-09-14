@@ -27,7 +27,7 @@
 
 **How to use**
 1. Follow instructions in INSTALL to compile and configure
-2. Move SIT.exe into target directory. ! For forensically soundness use external flash drive to execute SIT from.
+2. Move SIT.exe into target directory! For forensical soundness use external flash drive to execute SIT from.
 3. Use the command line to execute SIT (Admin rights required!)
 4. A temporary directory will be created to avoid using the Windows default temp directory outside the flash drive.
 5. The AFF4 image, the backup and statistic archives, as well as log files should be created in the same directory.
