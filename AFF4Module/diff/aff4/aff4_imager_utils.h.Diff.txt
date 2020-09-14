@@ -1,0 +1,81 @@
+--- aff4/aff4_imager_utils.h	Tue Aug 20 14:42:42 2019
++++ aff4/aff4_imager_utils.h	Fri Sep 11 13:08:56 2020
+@@ -14,6 +14,10 @@
+ */
+ 
+ /*
++  Modifications and additions as part of the SIT AFF4Module https://github.com/QuoSecGmbH/SIT, by Fabian Faust
++*/
++
++/*
+   Utilities for AFF4 imaging. These are mostly high level utilities used by the
+   command line imager.
+ */
+@@ -75,9 +79,21 @@
+     // As actions are executed they are added to this.
+     std::set<std::string> actions_run;
+ 
++    // The list of metadata files we copy (from the --metadata flag).
++    std::vector<std::string> metadataFiles;
++
+     // The list of input streams we copy (from the --inputs flag).
+     std::vector<std::string> inputs;
+ 
++    // The generic filename that is ignored by --input as metadatafile;
++    std::string genericMetafilename;
++
++    // The path to the temp folder (from the --temp flag).
++    std::string temp;
++
++    // The path to the temp folder (from the --temp flag), for recursive removal of non-empty folders in process_temp().
++    std::string tempRecursive;
++
+     virtual std::string GetName() const {
+         return "AFF4 Imager";
+     }
+@@ -99,7 +115,13 @@
+     virtual AFF4Status handle_list();
+     virtual AFF4Status parse_input();
+     virtual AFF4Status process_input();
++    virtual AFF4Status parse_metadataFiles();
++    virtual AFF4Status process_metadataFiles();
++    virtual AFF4Status handle_hash();
++    virtual AFF4Status handle_exportAll();
+     virtual AFF4Status handle_export();
++    virtual AFF4Status parse_temp();
++    virtual AFF4Status process_temp();
+     virtual AFF4Status handle_compression();
+ 
+     /**
+@@ -198,6 +220,31 @@
+                    "This can be specified multiple times with shell expansion. e.g.:\n"
+                    "-i /bin/*",
+                    false, "/path/to/file/or/device"));
++        
++        AddArg(new TCLAP::MultiArgToNextFlag(   // CUSTOM metadata file argument
++                    "m", "metadata", "Metadata file to process. If specified this file will be "
++                    "analyzed for RDF metadata sets associated with existing images. The filename of "
++                    "these images needs to be included with the metadata to ensure correct "
++                    "identification. Multiple independent metadata sets may be specified in one file."
++                    "If a set of metadata cannot be connected to a corresponding file, this set will " 
++                    "be added as independent metadata to information.turtle. The RDF metadata file "
++                    " will be processed last if paired with -i.",
++                    false, "/path/to/file/or/device"));
++
++        AddArg(new TCLAP::SwitchArg(   // CUSTOM hash verification
++                    "", "hash", "Verification using hash codes. If specified all stored files "
++                    "with hash codes in their metadata will have MD5 and SHA1 codes created and compared "
++                    "to the existing ones. The codes will be created after the files have been stored in the "
++                    "container, to ensure meaningfulness in regards to data integrity. "
++                    "Missing hash codes in the metadata or negative results for the comparison will be reported. ",
++                    false));
++
++        AddArg(new TCLAP::MultiArgToNextFlag(   // CUSTOM temp folder argument
++            "", "temp", "The folder at specified path will be removed after all reading "
++            "and writing operations to this directory are done. Useful for removing custom temp "
++            "folders from external tools. If used in conjunction with hash, the folder at the "
++            "specified path will be used as temporary folder or created there if necessary. ",
++            false, "/path/to/folder"));
+ 
+         AddArg(new TCLAP::SwitchArg(
+                    "", "relative", "If specified all files will be written relative to "

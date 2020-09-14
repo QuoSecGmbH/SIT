@@ -1,0 +1,1043 @@
+--- aff4/aff4_imager_utils.cc	Tue Aug 20 14:42:42 2019
++++ aff4/aff4_imager_utils.cc	Fri Sep 11 13:22:10 2020
+@@ -1,16 +1,57 @@
+ /*
++  Modifications and additions as part of the SIT AFF4Module https://github.com/QuoSecGmbH/SIT, by Fabian Faust
++*/
++
++/*
+   Utilities for AFF4 imaging. These are mostly high level utilities used by the
+   command line imager.
+ */
+ 
++
+ #include "aff4/libaff4.h"
+ #include "aff4/aff4_imager_utils.h"
+ #include "aff4/rdf.h"
+ #include <iostream>
++#include <fstream>
++#include <streambuf>
+ #include <string>
+ #include <time.h>
+ #include <memory>
++#include <algorithm>
+ #include "spdlog/spdlog.h"
++#include <vector>
++#include "verification.h"
++#include <windows.h>
++#include <cstdio>
++#include <stdio.h>
++#include <io.h>
++
++// Source: https://stackoverflow.com/questions/23943728/case-insensitive-standard-string-comparison-in-c
++bool icompare_pred(unsigned char a, unsigned char b)
++{
++    return std::tolower(a) == std::tolower(b);
++}
++
++// Source: https://stackoverflow.com/questions/23943728/case-insensitive-standard-string-comparison-in-c
++bool icompare(std::string const& a, std::string const& b)
++{
++    if (a.length() == b.length()) {
++        return std::equal(b.begin(), b.end(),
++            a.begin(), icompare_pred);
++    }
++    else {
++        return false;
++    }
++}
++
++void convertUpperCase(std::string& str) {
++    //const char* array = str.c_str();
++    int counter = 0;
++    for (char c : str) {
++        str[counter] = std::toupper(c);
++            counter++;
++    }
++}
+ 
+ namespace aff4 {
+ 
+@@ -40,6 +81,63 @@
+     return out_stream->WriteStream(in_stream.get(), &progress);
+ }
+ 
++// TODO Extract all artifacts from image and recreate sample folders
++AFF4Status ExtractAll(
++    DataStore& resolver, VolumeGroup& volumes,
++    URN input_urn,
++    std::string filename,
++    bool truncate, HANDLE hFile) {
++
++    AFF4Flusher<AFF4Stream> in_stream;
++    AFF4Flusher<FileBackedObject> file_stream;
++
++    // Use the VolumeGroup to figure out which stream to get.
++    RETURN_IF_ERROR(volumes.GetStream(input_urn, in_stream));
++
++    resolver.logger->info("Getting stream {} to {} ({})",
++        input_urn, filename, in_stream->Size());
++
++    RETURN_IF_ERROR(NewFileBackedObject(
++        &resolver, filename, truncate ? "truncate" : "append",
++        file_stream));
++
++    DefaultProgress progress(&resolver);
++    progress.length = in_stream->Size();
++
++    AFF4Status res = file_stream->WriteStream(in_stream.get(), &progress);
++
++    return res;
++}
++
++// Get file stream from image
++AFF4Status ExtractTemp(
++    DataStore& resolver, VolumeGroup& volumes,
++    URN input_urn,
++    std::string filename,
++    bool truncate, 
++    std::string export_dir) {
++
++    AFF4Flusher<AFF4Stream> in_stream;
++    AFF4Flusher<FileBackedObject> file_stream;
++
++    // Use the VolumeGroup to figure out which stream to get.
++    RETURN_IF_ERROR(volumes.GetStream(input_urn, in_stream));
++
++    resolver.logger->info("Getting stream {} to {} ({})",
++        input_urn, filename, in_stream->Size());
++
++    RETURN_IF_ERROR(NewFileBackedObject(
++        &resolver,filename ,truncate ? "truncate" : "append",
++        file_stream));
++
++    DefaultProgress progress(&resolver);
++    progress.length = in_stream->Size();
++
++    AFF4Status res = file_stream->WriteStream(in_stream.get(), &progress);
++
++    return res;
++}
++
+ 
+ // A Progress indicator which keeps tabs on the size of the output volume.
+ // This is used to support output volume splitting.
+@@ -80,9 +178,6 @@
+     for (auto stream: streams) {
+         stream->SwitchVolume(new_volume);
+     }
+-
+-
+-
+     return true;
+ }
+ 
+@@ -133,6 +228,10 @@
+         return INCOMPATIBLE_TYPES;
+     }
+ 
++    if (result == CONTINUE && Get("metadata")->isSet()) {
++        result = parse_metadataFiles();
++    }
++    
+     if (result == CONTINUE) {
+         result = parse_input();
+     }
+@@ -152,6 +251,10 @@
+                               max_output_volume_file_size);
+     }
+ 
++    if (result == CONTINUE) {
++        result = parse_temp();
++    }
++
+     return result;
+ }
+ 
+@@ -174,6 +277,18 @@
+         result = process_input();
+     }
+ 
++    if (result == CONTINUE && metadataFiles.size() > 0) {
++        result = process_metadataFiles();
++    }
++
++    if (result == CONTINUE && Get("hash")->isSet()) {
++        result = handle_hash();
++    }
++
++    if (result == CONTINUE && temp.size() > 0) {
++        result = process_temp();
++    }
++
+     return result;
+ }
+ 
+@@ -278,6 +393,8 @@
+     for (const auto& input: GetArg<TCLAP::MultiArgToNextFlag>("input")->getValue()) {
+         // Read input files from stdin - this makes it easier to support
+         // files with spaces and special shell chars in their names.
++
++        
+         if (input == "@") {
+             for(std::string line;;) {
+                 std::getline (std::cin, line);
+@@ -285,6 +402,8 @@
+                 inputs.push_back(line);
+             }
+         } else {
++            //std::cout << "parse_input() input file to consider for filter:  " << input << "\n";
++            
+             inputs.push_back(input);
+         }
+     }
+@@ -293,103 +412,674 @@
+ }
+ 
+ AFF4Status BasicImager::process_input() {
+-    for (std::string glob : inputs) {
++    
++    std::cout << "                Artifact integration : Start\n";
++    std::cerr << "                Artifact integration : Start\n";
++    
++    genericMetafilename = "genericMETA.turtle";
++    std::string inputForwardSlash; // temporary string to compare paths independently of slash changes by GlobFilename()
++  
++    int counter = 0;
++    int counterNonArtifactFiles = 0;
++
++    for (std::string glob : inputs) {               
+         for (std::string input : GlobFilename(glob)) {
++                  
++            inputForwardSlash = input;
++            // Replace backslashes with forward slashes
++            std::replace(inputForwardSlash.begin(), inputForwardSlash.end(), '\\', '/');
++
++            // Appends genericMetafilename to metadataFiles if found in input and not already in metadataFiles -> process_metadataFiles() will run next
++            if ((inputForwardSlash.find(genericMetafilename) != std::string::npos) ) { // TODO && (std::find(metadataFiles.begin(), metadataFiles.end(), genericMetafilename) != metadataFiles.end()) == false
++                metadataFiles.push_back(inputForwardSlash);
++                counter--;
++                // What if genericMetafilename specified by -m ?? TODO FIX !!
++            }
++
++            if (((std::find(metadataFiles.begin(), metadataFiles.end(), inputForwardSlash) != metadataFiles.end())==false) && (inputForwardSlash.find(genericMetafilename)!= std::string::npos)==false )
++            {  // TODO if genericMETA.rdf without -m -> call metaHandler for this input, -> see above!
++                                
++                // Check if the volume needs to be split.
++                VolumeManager(&resolver, this).MaybeSwitchVolumes();
++
++                // Get the output volume.
++                AFF4Volume* volume;
++                RETURN_IF_ERROR(GetCurrentVolume(&volume));
+ 
+-            // Check if the volume needs to be split.
+-            VolumeManager(&resolver, this).MaybeSwitchVolumes();
++                AFF4Flusher<FileBackedObject> input_stream;
+ 
+-            // Get the output volume.
+-            AFF4Volume *volume;
+-            RETURN_IF_ERROR(GetCurrentVolume(&volume));
+-
+-            AFF4Flusher<FileBackedObject> input_stream;
+-
+-            resolver.logger->debug("Will add file {}", input);
+-            RETURN_IF_ERROR(NewFileBackedObject(
+-                                &resolver, input, "read",
+-                                input_stream));
+-            resolver.logger->info("Adding {} as {}", input, input_stream->urn);
+-
+-            URN image_urn;
+-
+-            // Create a new AFF4Image in this volume.
+-            if (GetArg<TCLAP::SwitchArg>("relative")->getValue()) {
+-                char cwd[PATH_MAX];
+-                if (getcwd(cwd, PATH_MAX) == NULL) {
+-                    return IO_ERROR;
++                resolver.logger->debug("Will add file {}", input);
++                RETURN_IF_ERROR(NewFileBackedObject(
++                    &resolver, input, "read",
++                    input_stream));
++                resolver.logger->info("Adding {} as {}", input, input_stream->urn);
++
++                URN image_urn;
++
++                // Create a new AFF4Image in this volume.
++                if (GetArg<TCLAP::SwitchArg>("relative")->getValue()) {
++                    char cwd[PATH_MAX];
++                    if (getcwd(cwd, PATH_MAX) == NULL) {
++                        return IO_ERROR;
++                    }
++
++                    URN current_dir_urn = URN::NewURNFromFilename(cwd, false);
++                    image_urn.Set(volume->urn.Append(current_dir_urn.RelativePath(
++                        input_stream->urn)));
++                  
+                 }
++                else {
++                    image_urn.Set(volume->urn.Append(input_stream->urn.Path()));                 
+ 
+-                URN current_dir_urn = URN::NewURNFromFilename(cwd, false);
+-                image_urn.Set(volume->urn.Append(current_dir_urn.RelativePath(
+-                                                    input_stream->urn)));
+-            } else {
+-                image_urn.Set(volume->urn.Append(input_stream->urn.Path()));
++                    // Store the original filename.
++                    resolver.Set(image_urn, AFF4_STREAM_ORIGINAL_FILENAME,
++                        new XSDString(input));
++                }
+ 
+-                // Store the original filename.
+-                resolver.Set(image_urn, AFF4_STREAM_ORIGINAL_FILENAME,
+-                             new XSDString(input));
+-            }
++                // For very small streams, it is more efficient to just store them without
++                // compression. Also if the user did not ask for compression, there is no
++                // advantage in storing a Bevy based image, just store it in one piece.
++                if (compression == AFF4_IMAGE_COMPRESSION_ENUM_STORED ||
++                    (input_stream->Size() > 0 && input_stream->Size() < 10 * 1024 * 1024)) {
++
++                    AFF4Flusher<AFF4Stream> segment;
++                    RETURN_IF_ERROR(volume->CreateMemberStream(image_urn, segment));
++
++                    // If the underlying stream supports compression, lets do that.
++                    segment->compression_method = AFF4_IMAGE_COMPRESSION_ENUM_DEFLATE;
++
++                    // This doesnt do anything anyway because segments can
++                    // not be split across volumes.
++                    VolumeManager progress(&resolver, this);
++                    progress.ManageStream(segment.get());
++
++                    // Copy the input stream to the output stream.
++                    RETURN_IF_ERROR(segment->WriteStream(input_stream.get(), &progress));
++
++                    // Make this stream as an Image (Should we have
++                    // another type for a LogicalImage?
++                    
++                    resolver.Set(segment->urn, AFF4_TYPE, new URN(AFF4_IMAGE_TYPE),
++                        /* replace = */ false);
++
++                    // We need to explicitly check the abort status here.
++                    if (should_abort || aff4_abort_signaled) {
++                        return ABORTED;
++                    }
++                    std::cerr << "                Artifact integration : Added " << input << "\n";
+ 
+-            // For very small streams, it is more efficient to just store them without
+-            // compression. Also if the user did not ask for compression, there is no
+-            // advantage in storing a Bevy based image, just store it in one piece.
+-            if (compression == AFF4_IMAGE_COMPRESSION_ENUM_STORED ||
+-                    (input_stream->Size() > 0 && input_stream->Size() < 10 * 1024 * 1024) ) {
+-
+-                AFF4Flusher<AFF4Stream> segment;
+-                RETURN_IF_ERROR(volume->CreateMemberStream(image_urn, segment));
+-
+-                // If the underlying stream supports compression, lets do that.
+-                segment->compression_method = AFF4_IMAGE_COMPRESSION_ENUM_DEFLATE;
+-
+-                // This doesnt do anything anyway because segments can
+-                // not be split across volumes.
+-                VolumeManager progress(&resolver, this);
+-                progress.ManageStream(segment.get());
+-
+-                // Copy the input stream to the output stream.
+-                RETURN_IF_ERROR(segment->WriteStream(input_stream.get(), &progress));
+-
+-                // Make this stream as an Image (Should we have
+-                // another type for a LogicalImage?
+-                resolver.Set(segment->urn, AFF4_TYPE, new URN(AFF4_IMAGE_TYPE),
+-                             /* replace = */ false);
+-
+-                // We need to explicitly check the abort status here.
+-                if (should_abort || aff4_abort_signaled) {
+-                    return ABORTED;
++                    // Otherwise use an AFF4Image.
+                 }
++                else {
++                    AFF4Flusher<AFF4Image> image_stream;
++                    RETURN_IF_ERROR(
++                        AFF4Image::NewAFF4Image(
++                            &resolver, image_urn, volume, image_stream));
++
++                    // Set the output compression according to the user's wishes.
++                    image_stream->compression = compression;
++
++                    // Copy the input stream to the output stream.
++                    VolumeManager progress(&resolver, this);
++                    progress.ManageStream(image_stream.get());
++
++                    RETURN_IF_ERROR(image_stream->WriteStream(input_stream.get(), &progress));
++
++                    // Make this stream as an Image (Should we have
++                    // another type for a LogicalImage?
++                    resolver.Set(image_urn, AFF4_TYPE, new URN(AFF4_IMAGE_TYPE),
++                        /* replace = */ false);
+ 
+-                // Otherwise use an AFF4Image.
+-            } else {
+-                AFF4Flusher<AFF4Image> image_stream;
+-                RETURN_IF_ERROR(
+-                    AFF4Image::NewAFF4Image(
+-                        &resolver, image_urn, volume, image_stream));
+-
+-                // Set the output compression according to the user's wishes.
+-                image_stream->compression = compression;
+-
+-                // Copy the input stream to the output stream.
+-                VolumeManager progress(&resolver, this);
+-                progress.ManageStream(image_stream.get());
+-
+-                RETURN_IF_ERROR(image_stream->WriteStream(input_stream.get(), &progress));
+-
+-                // Make this stream as an Image (Should we have
+-                // another type for a LogicalImage?
+-                resolver.Set(image_urn, AFF4_TYPE, new URN(AFF4_IMAGE_TYPE),
+-                             /* replace = */ false);
++                    std::cerr << "                Artifact integration : Added " << input << "\n";
++                }
+             }
++            // Count log and config files
++            if (input.find("GetThis.log") != std::string::npos
++                || input.find("GetThis.csv") != std::string::npos
++                || input.find("Config.xml") != std::string::npos
++                || input.find("JobStatistics.csv") != std::string::npos
++                || input.find("ProcessStatistics.csv") != std::string::npos
++                || input.find("ArtifactModule.log") != std::string::npos) {
++                counterNonArtifactFiles++;
++            }
++            // Count artifacts
++            else counter++;
+         }
+     }
+ 
+     actions_run.insert("input");
+ 
++    std::cout << "                Artifacts integrated : "<<counter<<"\n";
++    std::cerr << "                Artifacts integrated : " << counter << "\n";
++
++    std::cout << "     Log and config files integrated : " << counterNonArtifactFiles << "\n";
++    std::cerr << "     Log and config files integrated : " << counterNonArtifactFiles << "\n";
++
++    std::cout << "                Artifact integration : Successfully finished\n";
++    std::cerr << "                Artifact integration : Successfully finished\n";
++
++    return CONTINUE;
++}
++
++AFF4Status BasicImager::parse_metadataFiles() {
++
++    for (const auto& input : GetArg<TCLAP::MultiArgToNextFlag>("metadata")->getValue()) {
++  
++        std::string tmp = input;
++
++            metadataFiles.push_back(tmp);
++    }
++
++    return CONTINUE;
++}
++
++AFF4Status BasicImager::process_metadataFiles() {
++
++    std::cout << "                Metadata integration : Start\n";
++    std::cerr << "                Metadata integration : Start\n";
++    
++    // Set if unsuccessful processing of metadataFile. Will cause the metadataFile to be included in image as file.
++    bool error = false;
++
++    for (std::string glob : metadataFiles) {
++        
++        for (std::string metadataFile : GlobFilename(glob)) {
++            
++            std::string metadataFileContent; 
++
++            // Reads in metadataFile as String
++            std::ifstream t(metadataFile);
++            std::string metadataFileString((std::istreambuf_iterator<char>(t)),
++            std::istreambuf_iterator<char>());
++                                             
++            // TODO REVIEW INPUT SECURITY E.G STRINGS                   
++
++           // Serialize metadataFileString and set in information.turtle                     
++           unsigned int prefixCounter = 0;
++           std::string header;
++           size_t position;
++           
++           //Check for "@id <aff4:metadata> ."
++           header = "@id <aff4:metadata> .";
++           position = metadataFileString.find(header);
++           if (position != std::string::npos) {
++               prefixCounter++;
++               metadataFileString.erase(position, header.length());
++           }
++           //Check for "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> ."
++           header = "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .";
++           position = metadataFileString.find(header);
++           if (position != std::string::npos) {
++               prefixCounter++;
++               metadataFileString.erase(position, header.length());
++           }
++           //Check for "@prefix aff4: <http://aff4.org/Schema#> ."
++           header = "@prefix aff4: <http://aff4.org/Schema#> .";
++           position = metadataFileString.find(header);
++           if (position != std::string::npos) {
++               prefixCounter++;
++               metadataFileString.erase(position, header.length());
++           }
++           //Check for "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> ."
++           header = "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .";
++           position = metadataFileString.find(header);
++           if (position != std::string::npos) {
++               prefixCounter++;
++               metadataFileString.erase(position, header.length());
++           }
++           
++           if (prefixCounter == 4) {
++               std::cout << "                      Metadata input : Valid\n";
++               std::cerr << "                      Metadata input : Valid\n";
++           }
++           else {
++               std::cout << "                      Metadata input : NOT valid!\n";
++               std::cerr << "                      Metadata input : NOT valid!\n";
++               // TODO reaction
++           }
++
++           //Remove empty lines
++           metadataFileString.erase(std::unique(metadataFileString.begin(), metadataFileString.end(),
++               [](char a, char b) {return a == '\n' && b == '\n';}),
++               metadataFileString.end());
++
++           std::string eof_signal = "eof-metadataFileString"; // Maybe unique string type for this?
++           std::string filePath;
++           std::string startDelimiter = "<"; 
++           std::string endDelimiter = ">";
++           std::string metadataSection;
++           std::string metadataSectionRemover; // For deleting this substring from metadataFileString
++           size_t startDelimiterPos;
++           size_t endDelimiterPos;
++           bool warningArtificalDelimiter = false; // Set if artifical delimiter is set
++           URN imageURN;
++           URN attributeURN;
++           URN testURN; // TODO remove
++           
++           //Check for </path/to/file> 
++                // Append metadata attributes to each file in information.turtle
++           while (metadataFileString.find(eof_signal) == std::string::npos) {
++               
++               // Check for <..> statement              
++               startDelimiterPos = metadataFileString.find("<"); 
++               
++               if (startDelimiterPos != std::string::npos) {
++                   endDelimiterPos = metadataFileString.find(">");
++                   
++                   if (endDelimiterPos != std::string::npos) {
++                       
++                       // Selects filePath
++                       filePath = metadataFileString.substr(startDelimiterPos+1, endDelimiterPos - startDelimiterPos -1);
++                       
++                       // Checks if filePath empty 
++                       if (filePath.length() > 0) {             
++
++                           // Remove filePath and its Delimiters
++                           metadataFileString.erase(startDelimiterPos, filePath.length()+2);
++
++                           //Appending metadata from filePath
++                           
++                           // Check for next filePath delimiter as end limit for this metadata section
++                           // if no startDelimiter left in file, append artifical one TODO remove
++                           startDelimiterPos = metadataFileString.find(startDelimiter);
++                           if (startDelimiterPos == std::string::npos) {
++                               metadataFileString.append(startDelimiter);
++                               warningArtificalDelimiter = true;
++                           }
++
++                           metadataSection = metadataFileString.substr(0, startDelimiterPos - 1);                                                    
++                           metadataSectionRemover = metadataSection; // Copy to allow removal of substring metadataSection 
++
++                           AFF4Volume* volume;
++                           RETURN_IF_ERROR(GetCurrentVolume(&volume));
++
++                           imageURN = volume->urn;
++                           attributeURN = imageURN;
++                           attributeURN.Append(filePath);
++                           testURN.Set(volume->urn.Append(filePath));
++                           
++                           // Appends metadata if information.turtle includes the required file
++                           if (resolver.HasURN(attributeURN)) {
++                               
++                               // TODO CHECK BEHAVIOR IF ATTRIBUTES IN WRONG ORDER IN METADATA TURTLE
++                               std::vector <std::string> aff4Types = {"ComputerName",
++                                   "VolumeID",
++                                   "ParentFRN",
++                                   "FRN",
++                                   "FullName",
++                                   "SampleName",
++                                   "SizeInBytes",
++                                   "MD5",
++                                   "SHA1",
++                                   "FindMatch",
++                                   "ContentType",
++                                   "SampleCollectionDate",
++                                   "CreationDate",
++                                   "LastModificationDate",
++                                   "LastAccessDate",
++                                   "LastAttrChangeDate",
++                                   "FileNameCreationDate",
++                                   "FileNameLastModificationDate",
++                                   "FileNameLastAccessDate",
++                                   "FileNameLastAttrModificationDate",
++                                   "AttrType",
++                                   "AttrName",
++                                   "AttrID",
++                                   "SnapshotID",
++                                   "SHA256",
++                                   "SSDeep",
++                                   "TLSH",
++                                   "YaraRules" };
++                               
++                                   for (std::string aff4Type : aff4Types) {
++                                       size_t startPosition; // Used to store startPositions for substr() usage
++                                       size_t RDFdelimiter; // Used to store either ";" or "."
++                                       std::string AFF4Type; // Used to store the AFF4Type that is currently being checked 
++
++                                       // Contains the metadataSection substring beginning with AFF4Type
++                                       std::string metadataSubstr;
++
++                                       // Contains the metadata
++                                       std::string metadata;
++                                       std::string metadataFiltered;
++
++                                       AFF4Type = "aff4:";
++                                       AFF4Type.append(aff4Type);
++                                      
++                                       if (metadataSection.find(AFF4Type) != std::string::npos) {
++
++                                           startPosition = metadataSection.find(AFF4Type);
++
++                                           // Contains metadataSection substring beginning with AFF4Type 
++
++                                           metadataSubstr = metadataSection.substr(startPosition);
++
++                                           // Contains the metadata
++                                           startPosition = metadataSubstr.find(AFF4Type) + AFF4Type.length();
++                                           if (metadataSubstr.find(";") != std::string::npos) {
++                                               RDFdelimiter = metadataSubstr.find(";");
++                                               metadata = metadataSubstr.substr(startPosition, RDFdelimiter - startPosition + 1);
++                                           }
++
++                                           else {
++                                               RDFdelimiter = metadataSubstr.find(".");
++                                               metadata = metadataSubstr.substr(startPosition, RDFdelimiter - startPosition + 1);
++                                           }
++                                           // Remove aff4:Type + metadata
++                                           metadataSection.erase(metadataSection.find(AFF4Type), AFF4Type.length() + metadata.length());
++
++                                           // Filter metadata 
++                                           metadataFiltered = metadata.substr(metadata.find('"') + 1); // Start at first "
++                                           metadataFiltered = metadataFiltered.substr(0, metadataFiltered.find('"'));
++                                       
++                                           // Removes redundant ^^xsd:string and spaces
++                                           if ((metadataFiltered.find("^^xsd:string") != std::string::npos)) {
++                                               std::string tmp = "\"";
++                                                   // Removes redundant ^^xsd:string
++                                                   metadataFiltered = metadataFiltered.substr(0, metadataFiltered.find("^^xsd:string"));
++                                                   // Remove spaces
++                                                   metadataFiltered.erase(remove_if(metadataFiltered.begin(), metadataFiltered.end(), isspace), metadataFiltered.end());
++                                                   
++                                           }
++                                         
++                                           // Check for input type
++                                             
++                                           if (aff4Type == "ComputerName") resolver.Set(testURN, AFF4_STREAM_COMPUTERNAME, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "VolumeID") resolver.Set(testURN, AFF4_STREAM_VOLUMEID, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "ParentFRN") resolver.Set(testURN, AFF4_STREAM_PARENTFRN, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "FRN") resolver.Set(testURN, AFF4_STREAM_FRN, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "FullName") resolver.Set(testURN, AFF4_STREAM_FULLNAME, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "SampleName") resolver.Set(testURN, AFF4_STREAM_SAMPLENAME, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "SizeInBytes") resolver.Set(testURN, AFF4_STREAM_SIZEINBYTES, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "MD5") resolver.Set(testURN, AFF4_STREAM_MD5, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "SHA1") resolver.Set(testURN, AFF4_STREAM_SHA1, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "FindMatch") resolver.Set(testURN, AFF4_STREAM_FINDMATCH, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "ContentType") resolver.Set(testURN, AFF4_STREAM_CONTENTTYPE, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "SampleCollectionDate") resolver.Set(testURN, AFF4_STREAM_SAMPLECOLLECTIONDATE, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "CreationDate") resolver.Set(testURN, AFF4_STREAM_CREATIONDATE, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "LastModificationDate") resolver.Set(testURN, AFF4_STREAM_LASTMODIFICATIONDATE, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "LastAccessDate") resolver.Set(testURN, AFF4_STREAM_LASTACCESSDATE, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "LastAttrChangeDate") resolver.Set(testURN, AFF4_STREAM_LASTATTRCHANGEDATE, new XSDString(metadataFiltered), true);                                            
++                                           if (aff4Type == "FileNameCreationDate") resolver.Set(testURN, AFF4_STREAM_FILENAMECREATIONDATE, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "FileNameLastModificationDate") resolver.Set(testURN, AFF4_STREAM_FILENAMELASTMODIFICATIONDATE, new XSDString(metadataFiltered), true);
++                                           if (aff4Type == "FileNameLastAccessDate") resolver.Set(testURN, AFF4_STREAM_FILENAMELASTACCESSDATE, new XSDString(metadataFiltered), true);
++                                           if (aff4Type == "FileNameLastAttrModificationDate") resolver.Set(testURN, AFF4_STREAM_FILENAMELASTATTRMODIFICATIONDATE, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "AttrType") resolver.Set(testURN, AFF4_STREAM_ATTRTYPE, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "AttrName") resolver.Set(testURN, AFF4_STREAM_ATTRNAME, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "AttrID") resolver.Set(testURN, AFF4_STREAM_ATTRID, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "SnapshotID") resolver.Set(testURN, AFF4_STREAM_SNAPSHOTID, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "SHA256") resolver.Set(testURN, AFF4_STREAM_SHA256, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "SSDeep") resolver.Set(testURN, AFF4_STREAM_SSDEEP, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "TLSH") resolver.Set(testURN, AFF4_STREAM_TLSH, new XSDString(metadataFiltered), true); 
++                                           if (aff4Type == "YaraRules") resolver.Set(testURN, AFF4_STREAM_YARARULES, new XSDString(metadataFiltered), true); 
++                                           //else resolver.Set(testURN, AFF4_STREAM_UNKNOWN, new XSDString(metadataFiltered), true); 
++                                       }
++                               }                                                                        
++                           }                                                                                                                           
++                           
++                           else { 
++                               // File from metadataFile was not found in information.turtle
++                               std::cout << "                Metadata integration : Metadata entry "<< attributeURN.SerializeToString().c_str() <<" NOT found in image!"<<"\n";
++                               std::cerr << "                Metadata integration : Metadata entry " << attributeURN.SerializeToString().c_str() << " NOT found in image!" << "\n";
++              
++                               error = true;
++                           }
++                                                     
++                           // remove section from metadataFileString -> Replace with attribute remove loop 
++                           startDelimiterPos = metadataFileString.find("<");
++                           metadataFileString.erase(1, startDelimiterPos - 1);
++                           
++                           // Remove artifical delimiter
++                           startDelimiterPos = metadataFileString.find("<");
++                           if (warningArtificalDelimiter) {
++                               metadataFileString.erase(startDelimiterPos, 1);
++                               warningArtificalDelimiter = false;
++                           }
++                           
++                           //Remove empty lines
++                           metadataFileString.erase(std::unique(metadataFileString.begin(), metadataFileString.end(),
++                               [](char a, char b) {return a == '\n' && b == '\n';}),
++                               metadataFileString.end());
++                       }
++                       // Reset filePath
++                       filePath = "";
++                   }
++               }
++               else {
++                   // All metadata successfully? appended to information.turtle
++                   metadataFileString.append(eof_signal); // Append to filePath? More elegant solution?
++               }
++           }
++        }
++    }
++
++    if (error) {
++        // TODO insert metadataString as aff4 image if invalid rdf file
++    }
++
++    std::cout << "                Metadata integration : Successfully finished\n";
++    std::cerr << "                Metadata integration : Successfully finished\n";
++
++    return CONTINUE;
++}
++
++AFF4Status BasicImager::handle_hash() {
++    
++    std::cout << "                   Hash verification : Start\n";
++    std::cerr << "                   Hash verification : Start\n";
++
++    HANDLE hFile = NULL;
++
++    std::vector<URN> urns;
++
++    char cwd[PATH_MAX];
++    if (getcwd(cwd, PATH_MAX) == NULL) {
++        return IO_ERROR;
++    }
++
++    std::string export_dir = cwd;
++
++    // Replace relative path with temp directory if specified
++    if (temp.size() > 0) export_dir = temp;
++
++    // These are all acceptable stream types.
++    for (const URN image_type : std::vector<URN>{
++            URN(AFF4_IMAGE_TYPE),
++                URN(AFF4_MAP_TYPE)
++        }) {
++        for (const URN& image : resolver.Query(AFF4_TYPE, &image_type)) {
++            resolver.logger->info("Found image {}", image);
++            
++            std::string urn_stringImage = image.SerializeToString().c_str();
++            // Skip log and config files
++            if (urn_stringImage.find("GetThis.log") != std::string::npos
++                || urn_stringImage.find("GetThis.csv") != std::string::npos
++                || urn_stringImage.find("Config.xml") != std::string::npos
++                || urn_stringImage.find("JobStatistics.csv") != std::string::npos
++                || urn_stringImage.find("ProcessStatistics.csv") != std::string::npos
++                || urn_stringImage.find("ArtifactModule.log") != std::string::npos) {
++                continue;
++            }
++            
++            urns.push_back(image);
++        }
++    }
++
++    // Counter for how many artifacts were successfully verified
++    int counter = 0;
++    // Successful MD5 verifications
++    int counterMD5 = 0;
++    // Successful SHA1 verifications
++    int counterSHA1 = 0;
++    
++    // String for calculated MD5 code
++    std::string MD5 = "";
++    // String for calculated SHA1 code
++    std::string SHA1 = "";
++    // Set if verification not successful
++    bool failedVerificationNotifier = false;
++    // Counts number of failed verifications
++    int failedVerifications = 0;
++
++    std::cout << "                     Artifacts found : "<<urns.size()<<"\n";
++    std::cerr << "                     Artifacts found : " << urns.size() << "\n";
++
++    // Iterates over each valid urn
++    for (const URN& export_urn : urns) {
++        std::vector<std::string> components{ export_dir, export_urn.Domain() };
++        for (auto& c : break_path_into_components(export_urn.Path())) {
++            components.push_back(escape_component(c));
++        }
++
++        // Prepend the domain (AFF4 volume) to the export directory to
++        // make sure the exported stream is unique.
++        std::string output_filename = join(components, PATH_SEP);
++        std::string urn_string = export_urn.SerializeToString().c_str();
++       
++        // Extracts files to temp directory to calculate hash codes
++        AFF4Status res = ExtractTemp(
++            resolver, volume_objs,
++            export_urn, output_filename, /* truncate = */ true, export_dir);
++
++        // TODO into log
++        if (res != STATUS_OK) {
++            resolver.logger->error("Error: {}", AFF4StatusToString(res));
++        }
++        
++        // Calculate MD5 code for file
++        if (calculateMD5(output_filename.c_str(),MD5) == 0) counterMD5++;
++        else { 
++            std::cerr << "               MD5 hash verification : For file "<<urn_string<<" NOT successfully calculated!"<<"\n";
++            failedVerificationNotifier = true;
++        }
++        
++        // String for MD5 code from metadata 
++        std::string MD5MetaString = "";
++        
++        // Acquire MD5 code from metadata registry
++        MD5MetaString = resolver.GetAttributeValue(export_urn, AFF4_STREAM_MD5);
++        
++        // Convert 
++        convertUpperCase(MD5);
++        
++        if (MD5MetaString == "NOT_FOUND") {
++            std::cerr << "               MD5 hash verification : For file " << urn_string << " hash code NOT found in metadata!" << "\n";
++            failedVerificationNotifier = true;
++        }       
++        else if (MD5MetaString.find(MD5) != std::string::npos) {
++            failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
++        }
++        else {
++            std::cerr << "               MD5 hash verification : For file " << urn_string << " hash codes NOT equal!" << "\n";
++            failedVerificationNotifier = true;
++        }
++
++        // Calculate SHA1 code for file
++        if (calculateSHA1(output_filename.c_str(),SHA1) == 0) counterSHA1++;
++        else {
++            std::cerr << "              SHA1 hash verification : For file " << urn_string << " NOT successfully calculated!" << "\n";
++            failedVerificationNotifier = true;
++        }
++
++        // TODO error treatment
++
++        // String for MD5 code from metadata 
++        std::string SHA1MetaString = "";
++
++        // Acquire MD5 code from metadata registry
++        SHA1MetaString = resolver.GetAttributeValue(export_urn, AFF4_STREAM_SHA1);
++
++        // Convert 
++        convertUpperCase(SHA1);
++
++        if (SHA1MetaString == "NOT_FOUND") {
++            std::cerr << "              SHA1 hash verification : For file " << urn_string << " hash code NOT found in metadata!" << "\n";
++            failedVerificationNotifier = true;
++        }
++        else if (SHA1MetaString.find(SHA1) != std::string::npos) {
++            failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
++        }
++        else {
++            std::cerr << "              SHA1 hash verification : For file " << urn_string << " hash codes NOT equal!" << "\n";
++            failedVerificationNotifier = true;
++        }
++
++        // TODO error treatment
++        if (std::remove(output_filename.c_str()) != 0) failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
++
++        if (failedVerificationNotifier) failedVerifications++;
++
++        failedVerificationNotifier = false;
++        counter++;
++
++        MD5 = "";
++        SHA1 = "";
++    }
++
++    // TODO exclude log and csv files
++    std::cout << "                   Artifacts checked : "<<counter<<"\n";
++    std::cerr << "                   Artifacts checked : " << counter << "\n";
++
++    std::cout << "     Artifacts successfully verified : "<<(counter-failedVerifications)<<"\n";
++    std::cerr << "     Artifacts successfully verified : " << (counter - failedVerifications) << "\n";
++
++    std::cout << " Artifacts NOT successfully verified : "<<failedVerifications<<"\n";
++    std::cerr << " Artifacts NOT successfully verified : " << failedVerifications << "\n";
++
++    std::cout << "                   Hash verification : Successfully finished\n";
++    std::cerr << "                   Hash verification : Successfully finished\n";
++
+     return CONTINUE;
+ }
+ 
++// Export all artifacts in container TODO
++AFF4Status BasicImager::handle_exportAll() {
++
++    HANDLE hFile = NULL;
++
++    std::vector<URN> urns;
++
++    char cwd[_MAX_PATH];
++    if (_getcwd(cwd, _MAX_PATH) == NULL) {
++        // TODO ERROR HANDLING
++    }
++    std::string export_dir = cwd;
++
++    // These are all acceptable stream types.
++    for (const URN image_type : std::vector<URN>{
++            URN(AFF4_IMAGE_TYPE),
++                URN(AFF4_MAP_TYPE)
++        }) {
++        for (const URN& image : resolver.Query(AFF4_TYPE, &image_type)) {
++            resolver.logger->info("Found image {}", image);
++            urns.push_back(image);
++        }
++    }
++
++    for (const URN& export_urn : urns) {
++        std::vector<std::string> components{ export_dir, export_urn.Domain() };
++        for (auto& c : break_path_into_components(export_urn.Path())) {
++            components.push_back(escape_component(c));
++        }
++
++        // Prepend the domain (AFF4 volume) to the export directory to
++        // make sure the exported stream is unique.
++        std::string output_filename = join(components, PATH_SEP);
++        std::string urn_string = export_urn.SerializeToString().c_str();
++        
++        AFF4Status res = ExtractAll(
++            resolver, volume_objs,
++            export_urn, output_filename, /* truncate = */ true, hFile);
++
++        if (res != STATUS_OK) {
++            resolver.logger->error("Error: {}", AFF4StatusToString(res));
++        }
++    }
++
++    return CONTINUE;
++}
++
++
+ AFF4Status BasicImager::handle_export() {
+     if (Get("output")->isSet()) {
+         resolver.logger->error(
+@@ -451,6 +1141,85 @@
+     return CONTINUE;
+ }
+ 
++AFF4Status BasicImager::parse_temp() {
++    for (const auto& input : GetArg<TCLAP::MultiArgToNextFlag>("temp")->getValue()) {
++            temp.append(input);       
++    }
++
++    // For recursive removal of non-empty folders in process_temp()
++    tempRecursive = temp;
++    return CONTINUE;
++}
++
++AFF4Status BasicImager::process_temp() {
++
++    WIN32_FIND_DATA FindFileData;
++    HANDLE hFind = INVALID_HANDLE_VALUE;
++    DWORD dwError;
++
++    std::string FilePath = tempRecursive;
++    std::string tmp = "\\*.*";
++    FilePath.append(tmp);   
++    
++    // Remove all files and subfolders from temp directory
++    hFind = FindFirstFile(FilePath.c_str(), &FindFileData);
++
++    //printf("First file name is %s\n", FindFileData.cFileName);
++    while (FindNextFile(hFind, &FindFileData) != 0)
++    {
++        std::string FileNameString = tempRecursive;
++        FileNameString.append("\\");
++        FileNameString.append(FindFileData.cFileName);
++
++        // TODO FILTER OUT ".." and "." at last position in FileNameString
++        if (FileNameString.find('.') != FileNameString.size() - 1 && FileNameString.find('.') != FileNameString.size() - 2 && FileNameString.find("..") != FileNameString.size() - 2) {
++            if (remove(FileNameString.c_str()) != 0) {
++
++                if (RemoveDirectory(FileNameString.c_str()) == 0) {
++                    
++                    // Replace current tempRecursive with next Directory if not already equal and if not file
++                    if (tempRecursive.compare(FileNameString) != 0 && tempRecursive.find('.') == std::string::npos ) {
++                        tmp = tempRecursive;
++                        tempRecursive = FileNameString;
++                        
++                        process_temp();
++                      
++                        // Reset tempRecursive
++                        tempRecursive = tmp;
++                    }
++                    if (RemoveDirectory(FileNameString.c_str()) == 0) {}//std::cout << "process_temp(): Could NOT remove file at " << FileNameString << "\n";
++
++                }
++                else {
++                    // Deleted file at  {FileNameString} 
++                }
++            }
++            else {
++                // Deleted file at  {FileNameString} 
++            }
++        }
++    }
++
++    dwError = GetLastError();
++    FindClose(hFind);
++    
++    if (dwError != ERROR_NO_MORE_FILES)
++    {
++        //printf("FindNextFile error. Error is %u\n", dwError);
++        //return (-1);
++        std::cerr << "                      Temp directory : NOT successfully emptied " << dwError << "\n";
++        std::cout << "                      Temp directory : NOT successfully emptied " << dwError << "\n";
++    }
++
++    if ((tempRecursive == tmp) && RemoveDirectory(temp.c_str()) == 0) {
++        std::cerr << "                      Temp directory : NOT successfully removed "<<GetLastError()<<"\n";
++        std::cout << "                      Temp directory : NOT successfully removed " << GetLastError() << "\n";
++
++    }
++    
++    return CONTINUE;
++}
++
+ 
+ AFF4Status BasicImager::GetNextPart() {
+     output_volume_part ++;
+@@ -514,7 +1283,8 @@
+                                        output_volume_part);
+         }
+ 
+-        resolver.logger->warn("Output file {} will be truncated.", volume_path);
++        // TODO fix
++        //resolver.logger->warn("Output file {} will be truncated.", volume_path);
+ 
+         RETURN_IF_ERROR(NewFileBackedObject(
+                             &resolver, volume_path, truncate ? "truncate" : "append",

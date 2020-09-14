@@ -5,7 +5,22 @@
  https://github.com/Velocidex/c-aff4
  ALL changes are documented in SIT-changelog.md
  The SIT VerificationModule is integrated into the AFF4Module for efficiency reasons.
+ Executing either modules is done by utilizing the correct command parameters, use -h if you need help
+ 
+# AFF4Module additions
+-m or --metadata was added to integrate custom metadata into the AFF4 images, a feature that was missing before. 
+	This is done by integrating RDF turtles in the same format as the AFF4 metadata turtle. For an example 
+	check /templates/genericMeta.turtle
 
+
+# VerificationModule additions
+-- hash was added to allow verification using MD5 and SHA1 codes. Every artifact stored in the AFF4 image will
+	be verified with the exception of log and config files, collected by the ArtifactModule
+
+# General additions 
+-- temp was added to allow the usage of temporary directories both for the AFF4Module and the VerificationModule
+
+Many small additions and improvements, check the diff files for more details
 
 # AFF4 -The Advanced Forensics File Format
 
@@ -45,6 +60,11 @@ standard https://github.com/aff4/Standard.
 
 5. Multi-threaded imaging for efficient utilization on multi core
    systems.
+6. Integrating RDF metadata using Turtle.
+
+7. Hash verification using MD5 and SHA1.
+
+8. Usage of custom temporary directories for live system forensics.
 
 
 ## What is not yet supported.

@@ -1,0 +1,43 @@
+--- aff4/Makefile.am	Tue Aug 20 14:42:42 2019
++++ aff4/Makefile.am	Fri Jul  3 11:59:08 2020
+@@ -61,7 +61,8 @@
+ 	aff4_symstream.h \
+ 	libaff4-c.h \
+ 	volume_group.h \
+-	threadpool.h
++	threadpool.h \
++	verification.h
+ 
+ libaff4_la_SOURCES = \
+ 	aff4_image.cc \
+@@ -78,7 +79,8 @@
+ 	aff4_symstream.cc \
+ 	libaff4-c.cc \
+ 	volume_group.cc \
+-	tclap_parsers.cc
++	tclap_parsers.cc \
++	verification.cc
+ 
+ libaff4_la_LDFLAGS = $(STATIC_LIBLDFLAGS)
+ libaff4_la_INCLUDES = ${RAPTOR2_CFLAGS} ${UUID_CFLAGS} ${TCLAP_CFLAGS} ${YAML_CPP_CFLAGS} ${ZLIB_CFLAGS} ${UUID_CFLAGS}
+@@ -89,14 +91,14 @@
+ libaff4_la_LIBADD = ${LIBS} ${YAML_CPP_LIBS} ${ZLIB_LIBS} ${RAPTOR2_LIBS} ${TCLAP_LIBS} ${UUID_LIBS}
+ endif
+ 
+-bin_PROGRAMS = aff4imager
+-aff4imager_LDADD = libaff4.la ${LIBS} ${YAML_CPP_LIBS} ${ZLIB_LIBS} ${RAPTOR2_LIBS} ${TCLAP_LIBS} ${UUID_LIBS}
+-aff4imager_INCLUDES = ${RAPTOR2_CFLAGS} ${UUID_CFLAGS} ${TCLAP_CFLAGS} ${YAML_CPP_CFLAGS} ${ZLIB_CFLAGS}
+-aff4imager_LDFLAGS = $(STATIC_LINKERLDFLAGS)
++bin_PROGRAMS = AFF4Module
++AFF4Module_LDADD = libaff4.la ${LIBS} ${YAML_CPP_LIBS} ${ZLIB_LIBS} ${RAPTOR2_LIBS} ${TCLAP_LIBS} ${UUID_LIBS}
++AFF4Module_INCLUDES = ${RAPTOR2_CFLAGS} ${UUID_CFLAGS} ${TCLAP_CFLAGS} ${YAML_CPP_CFLAGS} ${ZLIB_CFLAGS}
++AFF4Module_LDFLAGS = $(STATIC_LINKERLDFLAGS)
+ 
+ # Linux backwards compatibility shims for static builds.
+ if LINUX
+-   aff4imager_SOURCES = aff4imager.cc compatibility.cc
++   AFF4Module_SOURCES = aff4imager.cc compatibility.cc
+ else
+-   aff4imager_SOURCES = aff4imager.cc
++   AFF4Module_SOURCES = aff4imager.cc
+ endif

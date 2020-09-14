@@ -1,0 +1,9 @@
+--- Makefile.am	Tue Aug 20 14:42:42 2019
++++ Makefile.am	Fri May 22 16:56:30 2020
+@@ -1,5 +1,5 @@
+ AUTOMAKE_OPTIONS = subdir-objects
+ ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
+ 
+-SUBDIRS = aff4 tools/pmem tests
++SUBDIRS = aff4 
+ dist_doc_DATA = README.md

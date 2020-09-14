@@ -103,88 +103,88 @@ LEXICON_DEFINE(AFF4_STREAM_TIMESTAMP, "http://aff4.org/Schema#timestamp");
 // A custom original path of acquisition format.
 LEXICON_DEFINE(AFF4_STREAM_PATH_OF_ACQUISITION, "http://aff4.org/Schema#path_of_acquisition");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the name of the computer.
 LEXICON_DEFINE(AFF4_STREAM_COMPUTERNAME, "http://aff4.org/Schema#ComputerName");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the ID of the volume.
 LEXICON_DEFINE(AFF4_STREAM_VOLUMEID, "http://aff4.org/Schema#VolumeID");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the FRN of the parent.
 LEXICON_DEFINE(AFF4_STREAM_PARENTFRN, "http://aff4.org/Schema#ParentFRN");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the FRN.
 LEXICON_DEFINE(AFF4_STREAM_FRN, "http://aff4.org/Schema#FRN");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the full name.
 LEXICON_DEFINE(AFF4_STREAM_FULLNAME, "http://aff4.org/Schema#FullName");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the sample name.
 LEXICON_DEFINE(AFF4_STREAM_SAMPLENAME, "http://aff4.org/Schema#SampleName");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the size in bytes.
 LEXICON_DEFINE(AFF4_STREAM_SIZEINBYTES, "http://aff4.org/Schema#SizeInBytes");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the MD5 hash code.
 LEXICON_DEFINE(AFF4_STREAM_MD5, "http://aff4.org/Schema#MD5");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the SHA1 hash code.
 LEXICON_DEFINE(AFF4_STREAM_SHA1, "http://aff4.org/Schema#SHA1");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the FindMatch parameter.
 LEXICON_DEFINE(AFF4_STREAM_FINDMATCH, "http://aff4.org/Schema#FindMatch");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the content type.
 LEXICON_DEFINE(AFF4_STREAM_CONTENTTYPE, "http://aff4.org/Schema#ContentType");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the sample collection date.
 LEXICON_DEFINE(AFF4_STREAM_SAMPLECOLLECTIONDATE, "http://aff4.org/Schema#SampleCollectionDate");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the creation date.
 LEXICON_DEFINE(AFF4_STREAM_CREATIONDATE, "http://aff4.org/Schema#CreationDate");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the last modification date.
 LEXICON_DEFINE(AFF4_STREAM_LASTMODIFICATIONDATE, "http://aff4.org/Schema#LastModificationDate");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the last access date.
 LEXICON_DEFINE(AFF4_STREAM_LASTACCESSDATE, "http://aff4.org/Schema#LastAccessDate");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the last attribute change date.
 LEXICON_DEFINE(AFF4_STREAM_LASTATTRCHANGEDATE, "http://aff4.org/Schema#LastAttrChangeDate");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the filename creation date.
 LEXICON_DEFINE(AFF4_STREAM_FILENAMECREATIONDATE, "http://aff4.org/Schema#FileNameCreationDate");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the filename last modification date.
 LEXICON_DEFINE(AFF4_STREAM_FILENAMELASTMODIFICATIONDATE, "http://aff4.org/Schema#FileNameLastModificationDate");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the filename last access date.
 LEXICON_DEFINE(AFF4_STREAM_FILENAMELASTACCESSDATE, "http://aff4.org/Schema#FileNameLastAccessDate");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the filename last attribute modification date.
 LEXICON_DEFINE(AFF4_STREAM_FILENAMELASTATTRMODIFICATIONDATE, "http://aff4.org/Schema#FileNameLastAttrModificationDate");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the attribute type.
 LEXICON_DEFINE(AFF4_STREAM_ATTRTYPE, "http://aff4.org/Schema#AttrType");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the attribute name.
 LEXICON_DEFINE(AFF4_STREAM_ATTRNAME, "http://aff4.org/Schema#AttrName");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the attribute ID.
 LEXICON_DEFINE(AFF4_STREAM_ATTRID, "http://aff4.org/Schema#AttrID");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the snapshot ID.
 LEXICON_DEFINE(AFF4_STREAM_SNAPSHOTID, "http://aff4.org/Schema#SnapshotID");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the SHA256 hash code.
 LEXICON_DEFINE(AFF4_STREAM_SHA256, "http://aff4.org/Schema#SHA256");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the SSDeep.
 LEXICON_DEFINE(AFF4_STREAM_SSDEEP, "http://aff4.org/Schema#SSDeep");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the TLSH.
 LEXICON_DEFINE(AFF4_STREAM_TLSH, "http://aff4.org/Schema#TLSH");
 
-// A custom format to specify the examiner responsible for the metadata.
+// A custom format to specify the yara rules.
 LEXICON_DEFINE(AFF4_STREAM_YARARULES, "http://aff4.org/Schema#YaraRules");
 
 // A custom format to specify the examiner responsible for the metadata.

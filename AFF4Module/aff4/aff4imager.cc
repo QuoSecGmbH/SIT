@@ -120,8 +120,8 @@ int main(int argc, char* argv[]) {
     }
 
     imager.resolver.logger->error("Imaging failed with error: {}", AFF4StatusToString(res));
-    std::cout << "            Imaging failed with error: AFF4StatusToString(res)\n";
-    std::cerr << "            Imaging failed with error: AFF4StatusToString(res)\n";
+    std::cout << "            Imaging failed with error: "<<AFF4StatusToString(res)<<"\n";
+    std::cerr << "            Imaging failed with error: "<<AFF4StatusToString(res)<<"\n";
 
     GetSystemTime(&end);
 

@@ -1,11 +1,8 @@
-The following files were modified:
+The following files were modified: (For more detailed changelogs check /diff)
 
 configure.ac
 Makefile.am
 README.md
-	line 1-6: added IMPORTANT NOTE
-	line 25: removed Linux, Ubuntu and OSX compatibility information
-	line 38: fixed typo
 aff4/
 	aff4imager.cc
 	aff4_imager_utils.cc
@@ -21,3 +18,4 @@ NEWS
 Renamed:
 README.windows > oldINSTALL
 README.docker > INSTALL
+

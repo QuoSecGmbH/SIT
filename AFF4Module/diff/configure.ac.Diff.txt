@@ -1,0 +1,10 @@
+--- configure.ac	Tue Aug 20 14:42:42 2019
++++ configure.ac	Fri May 22 16:42:30 2020
+@@ -162,7 +162,5 @@
+ AC_CONFIG_FILES([
+         Makefile
+         aff4/Makefile
+-        tests/Makefile
+-        tools/pmem/Makefile
+         ])
+ AC_OUTPUT
