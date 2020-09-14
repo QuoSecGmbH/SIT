@@ -31,7 +31,7 @@
 3. Use the command line to execute SIT (Admin rights required!)
 4. A temporary directory will be created to avoid using the Windows default temp directory outside the flash drive.
 5. The AFF4 image, the backup and statistic archives, as well as log files should be created in the same directory.
-(Optional) 6. Disable different modules by using /key-= to disable a single module or archive from being executed or /key+= to add a non default module/archive to execution.
+6. (Optional) Disable different modules by using /key-= to disable a single module or archive from being executed or /key+= to add a non default module/archive to execution.
 
 **DFIR ORC Documentation**
 For more information on how to use DFIR ORC specific features such as the /key command: https://dfir-orc.github.io/index.html
