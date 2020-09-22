@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<getthis reportall="">
+
+<getthis hash="MD5,SHA1,SHA256" reportall="">
+
     <output compression="fast"/>
     <location shadows="yes">*</location>
     <samples MaxTotalBytes="1GB" MaxSampleCount="200000" MaxPerSampleBytes="650MB">
@@ -27,3 +29,4 @@
 
     </samples>
 </getthis>
+

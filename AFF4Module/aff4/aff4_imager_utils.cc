@@ -81,12 +81,13 @@ AFF4Status ExtractStream(
     return out_stream->WriteStream(in_stream.get(), &progress);
 }
 
-// TODO Extract all artifacts from image and recreate sample folders
+// Extract all artifacts from image and recreate sample folders
 AFF4Status ExtractAll(
     DataStore& resolver, VolumeGroup& volumes,
     URN input_urn,
     std::string filename,
-    bool truncate, HANDLE hFile) {
+    bool truncate,
+    std::string export_dir) {
 
     AFF4Flusher<AFF4Stream> in_stream;
     AFF4Flusher<FileBackedObject> file_stream;
@@ -95,10 +96,10 @@ AFF4Status ExtractAll(
     RETURN_IF_ERROR(volumes.GetStream(input_urn, in_stream));
 
     resolver.logger->info("Getting stream {} to {} ({})",
-        input_urn, filename, in_stream->Size());
+        input_urn, export_dir, in_stream->Size());
 
     RETURN_IF_ERROR(NewFileBackedObject(
-        &resolver, filename, truncate ? "truncate" : "append",
+        &resolver, export_dir, truncate ? "truncate" : "append",
         file_stream));
 
     DefaultProgress progress(&resolver);
@@ -271,6 +272,10 @@ AFF4Status BasicImager::ProcessArgs() {
 
     if (result == CONTINUE && Get("export")->isSet()) {
         result = handle_export();
+    }
+
+    if (result == CONTINUE && Get("exportAll")->isSet()) {
+        result = handle_exportAll();
     }
 
     if (result == CONTINUE && inputs.size() > 0) {
@@ -471,9 +476,18 @@ AFF4Status BasicImager::process_input() {
                 else {
                     image_urn.Set(volume->urn.Append(input_stream->urn.Path()));                 
 
-                    // Store the original filename.
-                    resolver.Set(image_urn, AFF4_STREAM_ORIGINAL_FILENAME,
-                        new XSDString(input));
+                    // Store the original filename without "tempSIT/" if present in name
+                    if (input.find("tempSIT") != std::string::npos) {
+                        // Remove "tempSIT/"                        
+                        std::string inputShort = input.substr((input.find("tempSIT") + 8));
+                        resolver.Set(image_urn, AFF4_STREAM_ORIGINAL_FILENAME,
+                            new XSDString(inputShort));
+                    }
+                    else {
+                        // Store the original filename.
+                        resolver.Set(image_urn, AFF4_STREAM_ORIGINAL_FILENAME,
+                            new XSDString(input));
+                    }
                 }
 
                 // For very small streams, it is more efficient to just store them without
@@ -864,7 +878,13 @@ AFF4Status BasicImager::process_metadataFiles() {
 }
 
 AFF4Status BasicImager::handle_hash() {
-    
+    if (Get("output")->isSet()) {
+        resolver.logger->error(
+            "Cannot specify an export and an output volume at the same time "
+            "(did you mean --export_dir).");
+        return INVALID_INPUT;
+    }
+
     std::cout << "                   Hash verification : Start\n";
     std::cerr << "                   Hash verification : Start\n";
 
@@ -911,11 +931,15 @@ AFF4Status BasicImager::handle_hash() {
     int counterMD5 = 0;
     // Successful SHA1 verifications
     int counterSHA1 = 0;
+    // Successful SHA256 verifications
+    int counterSHA256 = 0;
     
     // String for calculated MD5 code
     std::string MD5 = "";
     // String for calculated SHA1 code
     std::string SHA1 = "";
+    // String for calculated SHA256 code
+    std::string SHA256 = "";
     // Set if verification not successful
     bool failedVerificationNotifier = false;
     // Counts number of failed verifications
@@ -941,7 +965,6 @@ AFF4Status BasicImager::handle_hash() {
             resolver, volume_objs,
             export_urn, output_filename, /* truncate = */ true, export_dir);
 
-        // TODO into log
         if (res != STATUS_OK) {
             resolver.logger->error("Error: {}", AFF4StatusToString(res));
         }
@@ -981,12 +1004,10 @@ AFF4Status BasicImager::handle_hash() {
             failedVerificationNotifier = true;
         }
 
-        // TODO error treatment
-
-        // String for MD5 code from metadata 
+        // String for SHA1 code from metadata 
         std::string SHA1MetaString = "";
 
-        // Acquire MD5 code from metadata registry
+        // Acquire SHA1 code from metadata registry
         SHA1MetaString = resolver.GetAttributeValue(export_urn, AFF4_STREAM_SHA1);
 
         // Convert 
@@ -1004,6 +1025,34 @@ AFF4Status BasicImager::handle_hash() {
             failedVerificationNotifier = true;
         }
 
+        // Calculate SHA256 code for file
+        if (calculateSHA256(output_filename.c_str(), SHA256) == 0) counterSHA256++;
+        else {
+            std::cerr << "            SHA256 hash verification : For file " << urn_string << " NOT successfully calculated!" << "\n";
+            failedVerificationNotifier = true;
+        }
+
+        // String for SHA256 code from metadata 
+        std::string SHA256MetaString = "";
+
+        // Acquire SHA256 code from metadata registry
+        SHA256MetaString = resolver.GetAttributeValue(export_urn, AFF4_STREAM_SHA256);
+
+        // Convert 
+        convertUpperCase(SHA256);
+
+        if (SHA256MetaString == "NOT_FOUND") {
+            std::cerr << "            SHA256 hash verification : For file " << urn_string << " hash code NOT found in metadata!" << "\n";
+            failedVerificationNotifier = true;
+        }
+        else if (SHA256MetaString.find(SHA256) != std::string::npos) {
+            failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
+        }
+        else {
+            std::cerr << "            SHA256 hash verification : For file " << urn_string << " hash codes NOT equal!" << "\n";
+            failedVerificationNotifier = true;
+        }
+
         // TODO error treatment
         if (std::remove(output_filename.c_str()) != 0) failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
 
@@ -1014,9 +1063,9 @@ AFF4Status BasicImager::handle_hash() {
 
         MD5 = "";
         SHA1 = "";
+        SHA256 = "";
     }
 
-    // TODO exclude log and csv files
     std::cout << "                   Artifacts checked : "<<counter<<"\n";
     std::cerr << "                   Artifacts checked : " << counter << "\n";
 
@@ -1032,18 +1081,39 @@ AFF4Status BasicImager::handle_hash() {
     return CONTINUE;
 }
 
-// Export all artifacts in container TODO
+// Export all artifacts in container 
 AFF4Status BasicImager::handle_exportAll() {
+    
+    std::cout << "                         Extraction  : Start\n";
+    std::cerr << "                         Extraction  : Start\n";
+
+    
+    if (Get("output")->isSet()) {
+        resolver.logger->error(
+            "Cannot specify an export and an output volume at the same time "
+            "(did you mean --export_dir).");
+        return INVALID_INPUT;
+    }
 
     HANDLE hFile = NULL;
 
     std::vector<URN> urns;
 
-    char cwd[_MAX_PATH];
-    if (_getcwd(cwd, _MAX_PATH) == NULL) {
-        // TODO ERROR HANDLING
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, PATH_MAX) == NULL) {
+        return IO_ERROR;
     }
-    std::string export_dir = cwd;
+
+    std::string export_dir = GetArg<TCLAP::ValueArg<std::string>>(
+        "export_dir")->getValue();
+    if ((export_dir).empty()) export_dir = cwd;
+
+    // Directory name for the folder containing all exported files
+    export_dir_name = GetArg<TCLAP::ValueArg<std::string>>("exportAll")->getValue();
+    
+    if ((export_dir_name).empty()) export_dir_name = "PartialImageExport";
+ 
+    export_dir.append("/" + export_dir_name);
 
     // These are all acceptable stream types.
     for (const URN image_type : std::vector<URN>{
@@ -1055,26 +1125,70 @@ AFF4Status BasicImager::handle_exportAll() {
             urns.push_back(image);
         }
     }
+    
+    std::string originalDirectory;
 
+    int counterExtractions = 0;
+    int counterFailedExtractions = 0;
+
+    // Iterates over each valid urn
     for (const URN& export_urn : urns) {
         std::vector<std::string> components{ export_dir, export_urn.Domain() };
         for (auto& c : break_path_into_components(export_urn.Path())) {
             components.push_back(escape_component(c));
         }
 
+        // Add original directory to export path
+        originalDirectory = export_dir;
+        std::string tmp = resolver.GetAttributeValue(export_urn, AFF4_STREAM_FULLNAME);
+        if (tmp != "NOT_FOUND")
+            originalDirectory.append(tmp);
+        else {
+            std::string tmpCheck = export_urn.SerializeToString().c_str();
+            if (tmpCheck.find("GetThis.log") != std::string::npos
+                || tmpCheck.find("GetThis.csv") != std::string::npos
+                || tmpCheck.find("Config.xml") != std::string::npos
+                || tmpCheck.find("JobStatistics.csv") != std::string::npos
+                || tmpCheck.find("ProcessStatistics.csv") != std::string::npos
+                || tmpCheck.find("ArtifactModule.log") != std::string::npos) {
+                continue;
+            }
+            std::cout << "                         Extraction  : Original directory NOT found for "<< tmpCheck <<"\n";
+            std::cerr << "                         Extraction  : Original directory NOT found for "<< tmpCheck <<"\n";
+
+            counterFailedExtractions++;
+            continue;
+        }
+
+      
         // Prepend the domain (AFF4 volume) to the export directory to
         // make sure the exported stream is unique.
         std::string output_filename = join(components, PATH_SEP);
         std::string urn_string = export_urn.SerializeToString().c_str();
-        
+
+        std::cerr << "                         Extraction  : " << originalDirectory << "\n";
+
+        // Extracts files to temp directory to calculate hash codes
         AFF4Status res = ExtractAll(
             resolver, volume_objs,
-            export_urn, output_filename, /* truncate = */ true, hFile);
-
+            export_urn, output_filename, /* truncate = */ true, originalDirectory);
+        
         if (res != STATUS_OK) {
+            counterFailedExtractions++;
             resolver.logger->error("Error: {}", AFF4StatusToString(res));
         }
+        else counterExtractions++;
     }
+
+    std::cout << "    Artifacts successfully extracted : " << counterExtractions << "\n";
+    std::cerr << "    Artifacts successfully extracted : " << counterExtractions << "\n";
+
+    std::cout << "Artifacts NOT successfully extracted : " << counterFailedExtractions << "\n";
+    std::cerr << "Artifacts NOT successfully extracted : " << counterFailedExtractions << "\n";
+
+
+    std::cout << "                         Extraction  : Successfully finished\n";
+    std::cerr << "                         Extraction  : Successfully finished\n";
 
     return CONTINUE;
 }

@@ -139,8 +139,11 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 		for (auto file : toolMetadata) {
 			// file is metadata from one artifact/file, file[0] contains Attribute types
 			if (file.size() == 0) continue;
-
-			if (counter >= 1) {
+			if (counter < 1) {
+				counter++;
+				continue;
+			}
+			//if (counter >= 1) {
 				// Adds one empty line between each file 
 				turtleStream << "\n";
 
@@ -166,9 +169,9 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 				// Add pathIdentifier for file
 				turtleStream << pathIdentifier << "\n\n";
 				
-			}
+			//}
 			
-			if (counter >= 1) {
+			//if (counter >= 1) {
 
 				// Index for each individual element of file
 				int elementCounter = 0;
@@ -176,7 +179,10 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 				for (std::string element : file) {
 					// element is one metadata element
 					
-					if (element.empty()) continue;
+					if (element.empty()) {
+						elementCounter++;
+						continue;
+					}
 
 					// Add new attribute for each element
 					turtleStream << "\t" <<"aff4:" << toolMetadata[0][elementCounter] << "\t" << element;
@@ -185,7 +191,7 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 
 					elementCounter++;
 				}
-			}
+			//}
 			counter++;		
 		}
 	}

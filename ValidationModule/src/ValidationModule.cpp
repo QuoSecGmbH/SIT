@@ -47,8 +47,10 @@ int main(int argc, char* argv[]) {
     SYSTEMTIME start, end;
     GetSystemTime(&start);
 
-    std::cerr << "SIT ValidationModule v0.4\n\n";
-    std::cout << "SIT ValidationModule v0.4\n\n";    
+    std::string version = "v0.5";
+
+    std::cerr << "SIT ValidationModule "<<version<<"\n\n";
+    std::cout << "SIT ValidationModule " << version << "\n\n";
 
     std::cerr << "                          Start time : "
         <<start.wDay<<"."

@@ -94,6 +94,9 @@ class BasicImager {
     // The path to the temp folder (from the --temp flag), for recursive removal of non-empty folders in process_temp().
     std::string tempRecursive;
 
+    // The name for the folder to create for the exported files.
+    std::string export_dir_name;
+
     virtual std::string GetName() const {
         return "AFF4 Imager";
     }
@@ -261,6 +264,14 @@ class BasicImager {
                    " -e /dev/sda -D /tmp/ my_volume.aff4",
                    false, "", "string"));
 
+        AddArg(new TCLAP::ValueArg<std::string>( // CUSTOM exportAll argument
+            "", "exportAll", "Exports all files in the image to the same directory "
+            "and into the folder specified. If export_dir is specified, the files "
+            " will be extracted into this directory. If original file paths are stored "
+            " as metadata the original directory structure will be replicated. "
+            " --exportAll /PartialImageExport -D /tmp/ my_volume.aff4",
+            false,"", "string"));
+        
         AddArg(new TCLAP::ValueArg<std::string>(
                    "", "logfile", "Specify a file to store log messages to",
                    false, "", "string"));
@@ -294,7 +305,7 @@ class BasicImager {
                    "These AFF4 Volumes will be loaded and their metadata will "
                    "be parsed before the program runs.\n"
                    "Note that this is necessary before you can extract streams with the "
-                   "--export flag.",
+                   "--export or --exportAll flag.",
                    false, "/path/to/aff4/volume"));
 
         return STATUS_OK;

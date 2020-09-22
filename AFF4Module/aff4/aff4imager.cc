@@ -35,15 +35,18 @@ int main(int argc, char* argv[]) {
     // Set correct logfile
     FILE* logStream;
     bool verificationModule = false;
+    bool extraction = false;
     std::vector<std::string> args(argv, argv + argc);
+    std::string version = "v0.6";
+
     for (size_t i = 1; i < args.size(); ++i) {
         if (args[i] == "--hash") {
             // Start as VerificationModule with corresponding logfile
             verificationModule = true;
             // Redirect stderr into logfile
             freopen_s(&logStream, "VerificationModuleLog.txt", "w", stderr);
-            std::cerr << "SIT VerificationModule v0.5\n\n";
-            std::cout << "SIT VerificationModule v0.5\n\n";
+            std::cerr << "SIT VerificationModule "<<version<<"\n\n";
+            std::cout << "SIT VerificationModule " << version << "\n\n";
 
             std::cerr << "                          Start time : "
                 << start.wDay << "."
@@ -57,11 +60,17 @@ int main(int argc, char* argv[]) {
 
             break;
         }
+        if (args[i] == "--exportAll") {
+            extraction = true;
+            break;
+        }
     }
     if (!verificationModule) {
-        freopen_s(&logStream, "AFF4ModuleLog.txt", "w", stderr);
-        std::cerr << "SIT AFF4Module v0.5\n\n";
-        std::cout << "SIT AFF4Module v0.5\n\n";
+        if (!extraction) freopen_s(&logStream, "AFF4ModuleLog.txt", "w", stderr);
+        else freopen_s(&logStream, "AFF4ModuleExtractionLog.txt", "w", stderr);
+  
+        std::cerr << "SIT AFF4Module " << version << "\n\n";
+        std::cout << "SIT AFF4Module " << version << "\n\n";
 
         std::cerr << "                          Start time : "
             << start.wDay << "."

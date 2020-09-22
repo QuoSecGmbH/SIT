@@ -10,6 +10,11 @@ aff4/
 	lexicon.inc
 	Makefile.am
 
+Added:
+aff4/
+	verification.cc
+	verification.h
+
 Removed:
 README.linux
 INSTALL

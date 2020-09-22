@@ -44,4 +44,12 @@
             <argument> --temp tempSIT --hash PartialImage.aff4 </argument>
           </command>
     </archive>
+
+    <archive name="ImageExtractStatistics.7z" keyword="ImageExtract" concurrency="1" repeat="Once" compression="fast" archive_timeout="240" optional="yes">
+        <restrictions JobMemoryLimit="3G" ProcessMemoryLimit="3G" ElapsedTimeLimit="240"/>
+	  <command keyword="AFF4Module">
+            <execute name="AFF4Module.exe" run="7z:#Tools|AFF4Module.exe"/>
+            <argument> --exportAll PartialImageExtract PartialImage.aff4 </argument>
+          </command>
+    </archive>
 </wolf>

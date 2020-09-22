@@ -32,6 +32,7 @@
 4. A temporary directory will be created to avoid using the Windows default temp directory outside the flash drive.
 5. The AFF4 image, the backup and statistic archives, as well as log files should be created in the same directory.
 6. (Optional) Disable different modules by using /key= to set a specifi module, /key-= to disable a single module or archive from being executed or /key+= to add a non default module/archive to execution.
+7. (Optional) Extract all artifacts to the current directory of the SIT.exe. A custom folder will be created and for every artifact the original directory and name is restored, if available in the metadata. The functionality is available in a separate optional archive. Activate with /key=ImageExtract
 
 **DFIR ORC Documentation**
 For more information on how to use DFIR ORC specific features such as the /key command: https://dfir-orc.github.io/index.html
