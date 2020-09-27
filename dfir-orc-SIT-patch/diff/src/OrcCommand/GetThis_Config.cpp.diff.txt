@@ -1,0 +1,22 @@
+--- src/OrcCommand/GetThis_Config.cpp	Thu Mar 19 12:16:24 2020
++++ src/OrcCommand/GetThis_Config.cpp	Sun Sep 27 23:05:44 2020
+@@ -419,7 +419,7 @@
+     }
+     catch (...)
+     {
+-        log::Error(_L_, E_INVALIDARG, L"GetThis failed during argument parsing, exiting\r\n");
++        log::Error(_L_, E_INVALIDARG, L"ArtifactModule failed during argument parsing, exiting\r\n");
+         return E_INVALIDARG;
+     }
+     return S_OK;
+@@ -458,8 +458,8 @@
+ 
+     if (config.Output.Type == OutputSpec::Kind::None || config.Output.Path.empty())
+     {
+-        log::Info(_L_, L"\r\nINFO: Not output explicitely specified: creating GetThis.7z in current directory\r\n");
+-        config.Output.Path = L"GetThis.7z";
++        log::Info(_L_, L"\r\nINFO: Not output explicitely specified: creating ArtifactModule.7z in current directory\r\n");
++        config.Output.Path = L"ArtifactModule.7z";
+         config.Output.Type = OutputSpec::Kind::Archive;
+         config.Output.ArchiveFormat = ArchiveFormat::SevenZip;
+     }

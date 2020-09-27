@@ -81,7 +81,7 @@ std::vector<std::vector<std::string>> MainValidation(std::vector<std::string>Too
 	for (std::vector<std::string> out : FailedValidations) {
 		for (std::string out2 : out) {
 			if (!(out2.compare("<EOS>")) && !(out2.compare("GetThis"))
-				&& !(out2.compare("GetThis.csv"))
+				&& !(out2.compare("ArtifactModule.csv"))
 				&& !(out2.compare("ArtifactModule"))) {
 				std::cout << "          NOT successfully validated : " << out2 << "\n";
 				std::cerr << "          NOT successfully validated : " << out2 << "\n";
@@ -98,7 +98,6 @@ std::vector<std::vector<std::string>> MainValidation(std::vector<std::string>Too
 	return FailedValidations;
 }
 
-
 /* Main Validation for ArtifactModule output */
 std::vector<std::string> ArtifactModuleValidation(std::vector<std::string>& samples) {
 	
@@ -108,7 +107,7 @@ std::vector<std::string> ArtifactModuleValidation(std::vector<std::string>& samp
 	*/
 	std::vector<std::string> output;
 	// The name of the metadata output file from Artifact Module
-	std::string metadataName = "GetThis.csv";
+	std::string metadataName = "ArtifactModule.csv";
 	// Path to the current sample from InputForVerification
 	std::string samplePath;
 	//Used for constructing samplePath
@@ -120,14 +119,14 @@ std::vector<std::string> ArtifactModuleValidation(std::vector<std::string>& samp
 	// Contains all artifact entries found in output directory
 	std::vector<std::string> artifactEntries;
 
-	// Check if GetThis.csv file exists and if it contains valid metadata
+	// Check if ArtifactModule.csv file exists and if it contains valid metadata
 	tmpFile.push_back(metadataName);
 	// CheckIfFilesExist method returns all the files that do exist from the input
 	tmpFile = CheckIfFilesExist(ORCOutputDirectoryPath, tmpFile);
 	
 	// Validation if metadata csv file was found
 	if (std::find(tmpFile.begin(),tmpFile.end(),metadataName)!= tmpFile.end()) {
-		// GetThis.csv was NOT found
+		// ArtifactModule.csv was NOT found
 		output.push_back("<" + metadataName + ">");
 		std::cout << "             Metadata file NOT found : "<< metadataName<<"\n";
 		std::cerr << "             Metadata file NOT found : " << metadataName << "\n";
@@ -140,7 +139,7 @@ std::vector<std::string> ArtifactModuleValidation(std::vector<std::string>& samp
 		tmp.append("\\" + metadataName);
 		
 		if (!(IsValidMetadataFile(tmp,"GetThis", artifactMetadataEntries,artifactEntries))) {
-			// GetThis.csv was found but NOT valid
+			// ArtifactModule.csv was found but NOT valid
 			output.push_back("<<" + metadataName + ">>");
 			std::cout << "   Metadata file found but NOT valid : "<< metadataName <<"\n";
 			std::cerr << "   Metadata file found but NOT valid : "<< metadataName <<"\n";

@@ -1,0 +1,16 @@
+--- src/Orc/Orc.rc	Thu Mar 19 12:16:24 2020
++++ src/Orc/Orc.rc	Tue Jul 21 15:24:50 2020
+@@ -53,10 +53,10 @@
+     BEGIN
+         BLOCK "040904b0"
+         BEGIN
+-			VALUE "FileDescription", "DFIR-ORC Utility"
++			VALUE "FileDescription", "DFIR-ORC SIT Utility"
+ 			VALUE "FileVersion", ORC_FILEVER_STRING
+-			VALUE "InternalName", "DFIR-ORC"
+-			VALUE "OriginalFilename", "DFIR-ORC"
++			VALUE "InternalName", "DFIR-ORC SIT (Selective Imaging Tool)"
++			VALUE "OriginalFilename", "DFIR-ORC SIT (Selective Imaging Tool)"
+ 			VALUE "ProductName", ORC_PRODUCTNAME_STRINGW
+ 			VALUE "ProductVersion", ORC_PRODUCTVER_STRING
+         END

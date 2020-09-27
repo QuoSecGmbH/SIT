@@ -8,3 +8,6 @@ TODO add notices to modified files!
 		OrcCommand/
 			WolfLauncher_Run.cpp
 			ToolVersionRes.h.in
+			GetThis_Output.cpp
+			GetThis_Run.cpp
+			GetThis_Config.cpp

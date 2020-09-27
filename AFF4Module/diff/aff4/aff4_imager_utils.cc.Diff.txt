@@ -1,5 +1,5 @@
---- F:/AFF4diff/original/aff4/aff4_imager_utils.cc	Tue Aug 20 14:42:42 2019
-+++ F:/AFF4diff/new/aff4/aff4_imager_utils.cc	Wed Sep 23 00:40:52 2020
+--- aff4/aff4_imager_utils.cc	Tue Aug 20 14:42:42 2019
++++ aff4/aff4_imager_utils.cc	Sun Sep 27 23:39:06 2020
 @@ -1,16 +1,57 @@
  /*
 +  Modifications and additions as part of the SIT AFF4Module https://github.com/QuoSecGmbH/SIT, by Fabian Faust
@@ -415,7 +415,7 @@
              }
 +            // Count log and config files
 +            if (input.find("GetThis.log") != std::string::npos
-+                || input.find("GetThis.csv") != std::string::npos
++                || input.find("ArtifactModule.csv") != std::string::npos
 +                || input.find("Config.xml") != std::string::npos
 +                || input.find("JobStatistics.csv") != std::string::npos
 +                || input.find("ProcessStatistics.csv") != std::string::npos
@@ -779,7 +779,7 @@
 +            std::string urn_stringImage = image.SerializeToString().c_str();
 +            // Skip log and config files
 +            if (urn_stringImage.find("GetThis.log") != std::string::npos
-+                || urn_stringImage.find("GetThis.csv") != std::string::npos
++                || urn_stringImage.find("ArtifactModule.csv") != std::string::npos
 +                || urn_stringImage.find("Config.xml") != std::string::npos
 +                || urn_stringImage.find("JobStatistics.csv") != std::string::npos
 +                || urn_stringImage.find("ProcessStatistics.csv") != std::string::npos
@@ -1012,7 +1012,7 @@
 +        else {
 +            std::string tmpCheck = export_urn.SerializeToString().c_str();
 +            if (tmpCheck.find("GetThis.log") != std::string::npos
-+                || tmpCheck.find("GetThis.csv") != std::string::npos
++                || tmpCheck.find("ArtifactModule.csv") != std::string::npos
 +                || tmpCheck.find("Config.xml") != std::string::npos
 +                || tmpCheck.find("JobStatistics.csv") != std::string::npos
 +                || tmpCheck.find("ProcessStatistics.csv") != std::string::npos

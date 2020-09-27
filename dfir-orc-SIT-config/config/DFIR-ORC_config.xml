@@ -9,7 +9,7 @@
             <execute name="DFIR-Orc.exe" run="self:#GetThis"/>
             <argument>/config=res:#ArtifactModule_config.xml</argument>
             <output name="ArtifactModule.7z" source="File" argument="/out={FileName}"/>
-            <output name="ArtifactModule.log" source="StdOutErr"/>
+
 		</command>
 
     </archive>

@@ -2,7 +2,7 @@
 **Selective Imaging Tool**
 
 **Features:** 
-1. Framework for filesystem level Selective Imaging on live Windows systems.
+1. Framework for file system level Selective Imaging on live Windows systems.
 2. Maintain forensic soundness by targeting challenges specific for live system forensics
 	1. Standalone validation check to identify unexpected or manipulated output
 	2. Usage of AFF4 forensic format to facilitate direct artifact-metadata set association	
@@ -29,10 +29,10 @@
 
 **How to use**
 1. Follow instructions in INSTALL to compile and configure
-2. Move SIT.exe into target directory! For forensical soundness use external flash drive to execute SIT from.
+2. Move SIT.exe into target directory! For Forensic Soundness use external flash drive to execute SIT from.
 3. Use the command line to execute SIT (Admin rights required!)
-4. A temporary directory will be created to avoid using the Windows default temp directory outside the flash drive.
-5. The AFF4 image, the backup and statistic archives, as well as log files should be created in the same directory.
+4. A temporary directory will be created at the same path, to avoid using the Windows default temp directory outside the flash drive.
+5. The AFF4 image, the backup and statistic archives, as well as log files are created in the same directory.
 6. (Optional) Disable different modules by using /key= to set a specifi module, /key-= to disable a single module or archive from being executed or /key+= to add a non default module/archive to execution.
 7. (Optional) Extract all artifacts to the current directory of the SIT.exe. A custom folder will be created and for every artifact the original directory and name is restored, if available in the metadata. The functionality is available in a separate optional archive. Activate with /key=ImageExtract
 
@@ -49,7 +49,7 @@ Source: https://dfir-orc.github.io/GetThis.html
 - Based on GetThis ORC tool
 - Expanded tool documentation
 - Expanded tool feedback to examiner on execution 
-- Reviewed forensic soundness aspects 
+- Reviewed Forensic Soundness aspects 
 
 **ValidationModule:** 
 - Extensive validation to detect unexpected or manipulated output.

@@ -1,0 +1,65 @@
+--- src/OrcCommand/GetThis_Output.cpp	Thu Mar 19 12:16:24 2020
++++ src/OrcCommand/GetThis_Output.cpp	Sun Sep 27 22:24:40 2020
+@@ -11,6 +11,7 @@
+ #include "GetThis.h"
+ 
+ #include <string>
++//#include <iostream>
+ 
+ #include "SystemDetails.h"
+ #include "LogFileWriter.h"
+@@ -27,7 +28,7 @@
+     log::Info(
+         _L_,
+         L"\r\n"
+-        L"Usage: DFIR-Orc.exe GetThis\r\n"
++        L"Usage: DFIR-Orc.exe ArtifactModule (GetThis)\r\n"
+         L"\t[/out=<Cabinet.cab|Archive.zip|Archive.7z|Folder>] : Output format\r\n"
+         L"\t[/XOR=0xBADF00D0]\r\n"
+         L"\t[/sample=<SampleFile>]\r\n"
+@@ -50,8 +51,8 @@
+         L"\t/NoLimits                            : Do not set collection limit (be careful: output can get very big)\r\n"
+         L"\t/reportall                           : Add information about rejected samples (due to limits) to CSV\r\n"
+         L"\t/xor=0xBADF00D0                      : Pattern used to XOR sample files (optional)\r\n"
+-        L"\t/hash=<MD5|SHA1|SHA256>             : List hash values stored in GetThis.csv\r\n"
+-        L"\t/fuzzyhash=<SSDeep|TLSH>             : List fuzzy hash values stored in GetThis.csv\r\n"
++        L"\t/hash=<MD5|SHA1|SHA256>              : List hash values stored in ArtifactModule.csv\r\n"
++        L"\t/fuzzyhash=<SSDeep|TLSH>             : List fuzzy hash values stored in ArtifactModule.csv\r\n"
+         L"\r\n"
+         L"Note: config file settings are superseded by command line options\r\n"
+         L"\r\n"
+@@ -68,6 +69,7 @@
+ 
+ void Main::PrintParameters()
+ {
++
+     PrintComputerName();
+     PrintOperatingSystem();
+     wstring strDesc;
+@@ -189,7 +191,7 @@
+                 log::Info(_L_, L"      %s\r\n", item->GetDescription().c_str());
+             }
+ 
+-            log::Info(_L_, L"\r\n");
++            log::Info(_L_, L"\r\n"); 
+         }
+     }
+ 
+@@ -208,10 +210,17 @@
+         log::Info(_L_, L"\r\n");
+     }
+ 
++
++    
+     SaveAndPrintStartTime();
++    std::cout << "\r\nArtifact Acquisition  : Start\r\n";
++
+ }
+ 
+ void Main::PrintFooter()
+ {
++    //_L_->SetConsoleLog(true);
++
+     PrintExecutionTime();
++
+ }

@@ -46,7 +46,7 @@ bool IsValidMetadataFile(std::string path, std::string tool, std::vector<std::st
 	// Call MetadataSerialization to Open file and check if content fitting for {tool} 
 	file = serializeCSV(path,tool);
 
-	if (path.find("GetThis.csv") != std::string::npos) return IsValidMetadataFileArtifactModule(file, artifactMetadataEntries,artifactEntries);
+	if (path.find("ArtifactModule.csv") != std::string::npos) return IsValidMetadataFileArtifactModule(file, artifactMetadataEntries,artifactEntries);
 
 	std::cout << "                 Metadata validation : Successfully finished\n";
 	std::cerr << "                 Metadata validation : Successfully finished\n";
@@ -235,8 +235,8 @@ std::vector<std::string> findDirectoryEntries(std::string path) {
 				&& tmp != "Config.xml"
 				&& tmp != "JobStatistics.csv"
 				&& tmp != "ProcessStatistics.csv"
-				&& tmp != "GetThis.csv"
-				&& tmp != "GetThis.log"
+				&& tmp != "ArtifactModule.csv"
+				&& tmp != "ArtifactModule.log"
 				&& tmp != "."
 				&& tmp != "..") {
 				entries.push_back(tmp);

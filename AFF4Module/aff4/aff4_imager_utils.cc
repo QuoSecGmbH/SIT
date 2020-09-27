@@ -549,7 +549,7 @@ AFF4Status BasicImager::process_input() {
             }
             // Count log and config files
             if (input.find("GetThis.log") != std::string::npos
-                || input.find("GetThis.csv") != std::string::npos
+                || input.find("ArtifactModule.csv") != std::string::npos
                 || input.find("Config.xml") != std::string::npos
                 || input.find("JobStatistics.csv") != std::string::npos
                 || input.find("ProcessStatistics.csv") != std::string::npos
@@ -913,7 +913,7 @@ AFF4Status BasicImager::handle_hash() {
             std::string urn_stringImage = image.SerializeToString().c_str();
             // Skip log and config files
             if (urn_stringImage.find("GetThis.log") != std::string::npos
-                || urn_stringImage.find("GetThis.csv") != std::string::npos
+                || urn_stringImage.find("ArtifactModule.csv") != std::string::npos
                 || urn_stringImage.find("Config.xml") != std::string::npos
                 || urn_stringImage.find("JobStatistics.csv") != std::string::npos
                 || urn_stringImage.find("ProcessStatistics.csv") != std::string::npos
@@ -1146,7 +1146,7 @@ AFF4Status BasicImager::handle_exportAll() {
         else {
             std::string tmpCheck = export_urn.SerializeToString().c_str();
             if (tmpCheck.find("GetThis.log") != std::string::npos
-                || tmpCheck.find("GetThis.csv") != std::string::npos
+                || tmpCheck.find("ArtifactModule.csv") != std::string::npos
                 || tmpCheck.find("Config.xml") != std::string::npos
                 || tmpCheck.find("JobStatistics.csv") != std::string::npos
                 || tmpCheck.find("ProcessStatistics.csv") != std::string::npos

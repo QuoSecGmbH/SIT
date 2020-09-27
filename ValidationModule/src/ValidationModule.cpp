@@ -109,6 +109,7 @@ int main(int argc, char* argv[]) {
 
     // Select files for Partial Image
     std::cerr << "                    ValidationModule : Start reordering files in temp directory\n";
+
     for (std::string sample : Samples) {
         // Move all files up in main output directory for imaging
         int indexArtifact = 0;
@@ -131,6 +132,16 @@ int main(int argc, char* argv[]) {
             indexArtifact++;
         }
     }
+    // Move up ArtifactModule.log
+    std::string oldPathLog = Path;
+    std::string newPathLog = cwd;
+    oldPathLog.append("/ArtifactModule.log");
+    newPathLog.append("/ArtifactModuleLog.txt");
+    if (rename(oldPathLog.c_str(), newPathLog.c_str()) != 0) {
+        std::cerr << "                    ValidationModule : File " << "ArtifactModule.log" << " in temp directory NOT successfully moved from "<< oldPathLog.c_str() <<" to "<< newPathLog.c_str() <<" !\n";
+    }
+
+
     std::cerr << "                    ValidationModule : Successfully finished reordering files in temp directory\n";
 
     std::cerr << "                    ValidationModule : Successfully finished\n\n";

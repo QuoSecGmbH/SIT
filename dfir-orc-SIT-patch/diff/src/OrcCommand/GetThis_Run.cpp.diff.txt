@@ -1,0 +1,193 @@
+--- src/OrcCommand/GetThis_Run.cpp	Thu Mar 19 12:16:24 2020
++++ src/OrcCommand/GetThis_Run.cpp	Sun Sep 27 22:49:56 2020
+@@ -78,7 +78,7 @@
+     fs::path logFile;
+ 
+     logFile = outDir;
+-    logFile /= L"GetThis.log";
++    logFile /= L"ArtifactModule.log";
+ 
+     if (!_L_->IsLoggingToFile())
+     {
+@@ -87,7 +87,7 @@
+     }
+ 
+     fs::path csvFile(outDir);
+-    csvFile /= L"GetThis.csv";
++    csvFile /= L"ArtifactModule.csv";
+ 
+     auto options = std::make_unique<TableOutput::CSV::Options>();
+     options->Encoding = config.Output.OutputEncoding;
+@@ -656,7 +656,7 @@
+         {
+             for (auto& name : aMatch->MatchingNames)
+             {
+-                log::Verbose(_L_, L"Adding sample %s to archive\r\n", name.FullPathName.c_str());
++                log::Verbose(_L_, L"Artifact Acquisition  : Adding sample %s to archive\r\n", name.FullPathName.c_str());
+ 
+                 sampleRef.Content = aSpec.Content;
+                 sampleRef.CollectionDate = CollectionDate;
+@@ -718,7 +718,9 @@
+         }
+     });
+ 
+-    log::Info(_L_, L"\r\nAdding matching samples to archive:\r\n");
++    log::Info(_L_, L"\r\nArtifact Acquisition  : Adding matching samples to archive\r\n");
++
++    _L_->SetConsoleLog(false);     
+     compressor->SetCallback(
+         [this](const Archive::ArchiveItem& item) { log::Info(_L_, L"\t%s\r\n", item.Path.c_str()); });
+ 
+@@ -727,6 +729,7 @@
+         log::Error(_L_, hr, L"Failed to flush queue to %s\r\n", config.Output.Path.c_str());
+         return hr;
+     }
++    _L_->SetConsoleLog(true);
+ 
+     wstring strComputerName;
+     SystemDetails::GetOrcComputerName(strComputerName);
+@@ -855,6 +858,8 @@
+ 
+             CSV->Flush();
+ 
++            std::cout << "\r\nArtifact Acquisition  : Creating metadata and log files\r\n";
++
+             if (auto pStreamWriter = std::dynamic_pointer_cast<TableOutput::IStreamWriter>(CSV);
+                 pStreamWriter && pStreamWriter->GetStream())
+             {
+@@ -866,12 +871,15 @@
+                     {
+                         log::Error(_L_, hr, L"Failed to rewind csv stream\r\n");
+                     }
+-                    if (FAILED(hr = compressor->AddStream(L"GetThis.csv", L"GetThis.csv", pCSVStream)))
++                    if (FAILED(hr = compressor->AddStream(L"ArtifactModule.csv", L"ArtifactModule.csv", pCSVStream)))
+                     {
+-                        log::Error(_L_, hr, L"Failed to add GetThis.csv\r\n");
++                        log::Error(_L_, hr, L"Failed to add ArtifactModule.csv\r\n");
+                     }
+                 }
+             }
++            _L_->SetConsoleLog(false);
++            log::Info(_L_, L"\r\nArtifact Acquisition  : Successfully finished\r\n");
++            _L_->SetConsoleLog(true);
+ 
+             auto pLogStream = _L_->GetByteStream();
+             _L_->CloseLogToStream(false);
+@@ -882,9 +890,9 @@
+                 {
+                     log::Error(_L_, hr, L"Failed to rewind log stream\r\n");
+                 }
+-                if (FAILED(hr = compressor->AddStream(L"GetThis.log", L"GetThis.log", pLogStream)))
++                if (FAILED(hr = compressor->AddStream(L"ArtifactModule.log", L"ArtifactModule.log", pLogStream)))
+                 {
+-                    log::Error(_L_, hr, L"Failed to add GetThis.log\r\n");
++                    log::Error(_L_, hr, L"Failed to add ArtifactModule.log\r\n");
+                 }
+             }
+ 
+@@ -924,7 +932,9 @@
+ 
+     auto devnull = std::make_shared<DevNullStream>(_L_);
+ 
+-    log::Info(_L_, L"\r\nComputing hash of off limit samples\r\n");
++    //log::Info(_L_, L"\r\nComputing hash of off limit samples\r\n");
++    log::Info(_L_, L"\r\nArtifact Acquisition  : Computing Hash codes for matching samples\r\n");
++
+ 
+     for (SampleSet::iterator it = begin(MatchingSamples); it != end(MatchingSamples); ++it)
+     {
+@@ -950,6 +960,8 @@
+ {
+     HRESULT hr = E_FAIL;
+ 
++    log::Info(_L_, L"\r\nArtifact Acquisition  : Finding matching samples\r\n");
++
+     if (FAILED(hr = FileFinder.InitializeYara(config.Yara)))
+     {
+         log::Error(_L_, hr, L"Failed to initialize Yara scan\r\n");
+@@ -1016,7 +1028,9 @@
+                                 }
+                                 else
+                                 {
++                                    _L_->SetConsoleLog(false);
+                                     log::Info(_L_, L"\t%s matched (%d bytes)\r\n", strName.c_str(), dwlDataSize);
++                                    _L_->SetConsoleLog(true);
+                                     aSpecIt->PerSampleLimits.dwlAccumulatedBytesTotal += dwlDataSize;
+                                     aSpecIt->PerSampleLimits.dwAccumulatedSampleCount++;
+ 
+@@ -1101,13 +1115,13 @@
+             if (config.bFlushRegistry)
+             {
+                 if (FAILED(hr = RegFlushKeys()))
+-                    log::Info(_L_, L"Failed to flush keys (hr = 0x%lx)\r\n", hr);
++                    log::Info(_L_, L"Artifact Acquisition  : Failed to flush keys (hr = 0x%lx)\r\n", hr);
+             }
+         }
+         catch (...)
+         {
+             log::Error(
+-                _L_, E_FAIL, L"GetThis failed during output setup, parameter output, RegistryFlush, exiting\r\n");
++                _L_, E_FAIL, L"ArtifactModule failed during output setup, parameter output, RegistryFlush, exiting\r\n");
+             return E_FAIL;
+         }
+ 
+@@ -1115,22 +1129,22 @@
+         {
+             if (FAILED(hr = FindMatchingSamples()))
+             {
+-                log::Error(_L_, hr, L"\r\nGetThis failed while matching samples\r\n");
++                log::Error(_L_, hr, L"\r\nArtifactModule failed while matching samples\r\n");
+                 return hr;
+             }
+             if (FAILED(hr = CollectMatchingSamples(config.Output, Samples)))
+             {
+-                log::Error(_L_, hr, L"\r\nGetThis failed while collecting samples\r\n");
++                log::Error(_L_, hr, L"\r\nArtifactModule failed while collecting samples\r\n");
+                 return hr;
+             }
+         }
+         catch (...)
+         {
+-            log::Error(_L_, E_ABORT, L"\r\nGetThis failed during sample collection, terminating cabinet\r\n");
++            log::Error(_L_, E_ABORT, L"\r\nArtifactModule failed during sample collection, terminating cabinet\r\n");
+             wstring strLogFileName(_L_->FileName());
+             _L_->CloseLogFile();
+ 
+-            log::Error(_L_, E_ABORT, L"\r\nGetThis failed during sample collection, terminating cabinet\r\n");
++            log::Error(_L_, E_ABORT, L"\r\nArtifactModule failed during sample collection, terminating cabinet\r\n");
+ 
+             return E_ABORT;
+         }
+@@ -1139,7 +1153,7 @@
+     {
+         try
+         {
+-            log::Info(_L_, L"Decompressing %s to %s\r\n", config.strExtractCab.c_str(), config.Output.Path.c_str());
++            log::Info(_L_, L"Artifact Acquisition  : Decompressing %s to %s\r\n", config.strExtractCab.c_str(), config.Output.Path.c_str());
+ 
+             auto extract = ArchiveExtract::MakeExtractor(Archive::GetArchiveFormat(config.strExtractCab), _L_, true);
+ 
+@@ -1157,7 +1171,7 @@
+             {
+                 log::Info(
+                     _L_,
+-                    L"Decompressing %s to %s completed successfully\r\n",
++                    L"Artifact Acquisition  : Decompressing %s to %s completed successfully\r\n",
+                     config.strExtractCab.c_str(),
+                     config.Output.Path.c_str(),
+                     hr);
+@@ -1165,9 +1179,13 @@
+         }
+         catch (...)
+         {
+-            log::Info(_L_, L"\r\nGetThis failed during cab extraction\r\n");
++            log::Info(_L_, L"\r\nArtifactModule failed during cab extraction\r\n");
+             return E_FAIL;
+         }
+     }
++
++    //log::Info(_L_, L"\r\nArtifact Acquisition  : Successfully finished\r\n");
++    std::cout << "\r\nArtifact Acquisition  : Successfully finished\r\n";
++
+     return S_OK;
+ }
