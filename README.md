@@ -25,6 +25,8 @@
 4. Storage in forensic AFF4 format with central metadata registry for each artifact **[AFF4Module]**.
 5. Verification of all artifacts using SHA1 and MD5 hash codes **[VerificationModule]**. 
 
+![](https://github.com/QuoSecGmbH/SIT/blob/master/SITModules.png)
+
 **How to use**
 1. Follow instructions in INSTALL to compile and configure
 2. Move SIT.exe into target directory! For forensical soundness use external flash drive to execute SIT from.
