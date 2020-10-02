@@ -24,7 +24,6 @@ SOFTWARE. */
 #include <string>
 #include <vector>
 
-
 /* Oversees the insertion of metadataSerialized into turtle at path. If no turtle exists, it is created. */
 bool ConversionRDF(std::string path, std::vector<std::vector<std::vector<std::string>>> metadataSerialized, std::vector <std::string>& artifacts);
 

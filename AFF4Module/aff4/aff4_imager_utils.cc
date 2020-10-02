@@ -45,7 +45,6 @@ bool icompare(std::string const& a, std::string const& b)
 }
 
 void convertUpperCase(std::string& str) {
-    //const char* array = str.c_str();
     int counter = 0;
     for (char c : str) {
         str[counter] = std::toupper(c);
@@ -54,7 +53,6 @@ void convertUpperCase(std::string& str) {
 }
 
 namespace aff4 {
-
 
 AFF4Status ExtractStream(
     DataStore& resolver, VolumeGroup &volumes,
@@ -422,7 +420,9 @@ AFF4Status BasicImager::process_input() {
     std::cerr << "                Artifact integration : Start\n";
     
     genericMetafilename = "genericMETA.turtle";
-    std::string inputForwardSlash; // temporary string to compare paths independently of slash changes by GlobFilename()
+
+    // temporary string to compare paths independently of slash changes by GlobFilename()
+    std::string inputForwardSlash; 
   
     int counter = 0;
     int counterNonArtifactFiles = 0;
@@ -435,14 +435,13 @@ AFF4Status BasicImager::process_input() {
             std::replace(inputForwardSlash.begin(), inputForwardSlash.end(), '\\', '/');
 
             // Appends genericMetafilename to metadataFiles if found in input and not already in metadataFiles -> process_metadataFiles() will run next
-            if ((inputForwardSlash.find(genericMetafilename) != std::string::npos) ) { // TODO && (std::find(metadataFiles.begin(), metadataFiles.end(), genericMetafilename) != metadataFiles.end()) == false
+            if ((inputForwardSlash.find(genericMetafilename) != std::string::npos) ) { 
                 metadataFiles.push_back(inputForwardSlash);
                 counter--;
-                // What if genericMetafilename specified by -m ?? TODO FIX !!
             }
 
             if (((std::find(metadataFiles.begin(), metadataFiles.end(), inputForwardSlash) != metadataFiles.end())==false) && (inputForwardSlash.find(genericMetafilename)!= std::string::npos)==false )
-            {  // TODO if genericMETA.rdf without -m -> call metaHandler for this input, -> see above!
+            { 
                                 
                 // Check if the volume needs to be split.
                 VolumeManager(&resolver, this).MaybeSwitchVolumes();
@@ -591,9 +590,6 @@ AFF4Status BasicImager::process_metadataFiles() {
 
     std::cout << "                Metadata integration : Start\n";
     std::cerr << "                Metadata integration : Start\n";
-    
-    // Set if unsuccessful processing of metadataFile. Will cause the metadataFile to be included in image as file.
-    bool error = false;
 
     for (std::string glob : metadataFiles) {
         
@@ -604,9 +600,7 @@ AFF4Status BasicImager::process_metadataFiles() {
             // Reads in metadataFile as String
             std::ifstream t(metadataFile);
             std::string metadataFileString((std::istreambuf_iterator<char>(t)),
-            std::istreambuf_iterator<char>());
-                                             
-            // TODO REVIEW INPUT SECURITY E.G STRINGS                   
+            std::istreambuf_iterator<char>());                 
 
            // Serialize metadataFileString and set in information.turtle                     
            unsigned int prefixCounter = 0;
@@ -649,7 +643,6 @@ AFF4Status BasicImager::process_metadataFiles() {
            else {
                std::cout << "                      Metadata input : NOT valid!\n";
                std::cerr << "                      Metadata input : NOT valid!\n";
-               // TODO reaction
            }
 
            //Remove empty lines
@@ -668,10 +661,10 @@ AFF4Status BasicImager::process_metadataFiles() {
            bool warningArtificalDelimiter = false; // Set if artifical delimiter is set
            URN imageURN;
            URN attributeURN;
-           URN testURN; // TODO remove
+           URN testURN; 
            
            //Check for </path/to/file> 
-                // Append metadata attributes to each file in information.turtle
+           // Append metadata attributes to each file in information.turtle
            while (metadataFileString.find(eof_signal) == std::string::npos) {
                
                // Check for <..> statement              
@@ -694,7 +687,7 @@ AFF4Status BasicImager::process_metadataFiles() {
                            //Appending metadata from filePath
                            
                            // Check for next filePath delimiter as end limit for this metadata section
-                           // if no startDelimiter left in file, append artifical one TODO remove
+                           // if no startDelimiter left in file, append artifical one 
                            startDelimiterPos = metadataFileString.find(startDelimiter);
                            if (startDelimiterPos == std::string::npos) {
                                metadataFileString.append(startDelimiter);
@@ -715,7 +708,6 @@ AFF4Status BasicImager::process_metadataFiles() {
                            // Appends metadata if information.turtle includes the required file
                            if (resolver.HasURN(attributeURN)) {
                                
-                               // TODO CHECK BEHAVIOR IF ATTRIBUTES IN WRONG ORDER IN METADATA TURTLE
                                std::vector <std::string> aff4Types = {"ComputerName",
                                    "VolumeID",
                                    "ParentFRN",
@@ -765,7 +757,6 @@ AFF4Status BasicImager::process_metadataFiles() {
                                            startPosition = metadataSection.find(AFF4Type);
 
                                            // Contains metadataSection substring beginning with AFF4Type 
-
                                            metadataSubstr = metadataSection.substr(startPosition);
 
                                            // Contains the metadata
@@ -826,7 +817,7 @@ AFF4Status BasicImager::process_metadataFiles() {
                                            if (aff4Type == "SSDeep") resolver.Set(testURN, AFF4_STREAM_SSDEEP, new XSDString(metadataFiltered), true); 
                                            if (aff4Type == "TLSH") resolver.Set(testURN, AFF4_STREAM_TLSH, new XSDString(metadataFiltered), true); 
                                            if (aff4Type == "YaraRules") resolver.Set(testURN, AFF4_STREAM_YARARULES, new XSDString(metadataFiltered), true); 
-                                           //else resolver.Set(testURN, AFF4_STREAM_UNKNOWN, new XSDString(metadataFiltered), true); 
+
                                        }
                                }                                                                        
                            }                                                                                                                           
@@ -836,7 +827,6 @@ AFF4Status BasicImager::process_metadataFiles() {
                                std::cout << "                Metadata integration : Metadata entry "<< attributeURN.SerializeToString().c_str() <<" NOT found in image!"<<"\n";
                                std::cerr << "                Metadata integration : Metadata entry " << attributeURN.SerializeToString().c_str() << " NOT found in image!" << "\n";
               
-                               error = true;
                            }
                                                      
                            // remove section from metadataFileString -> Replace with attribute remove loop 
@@ -865,10 +855,6 @@ AFF4Status BasicImager::process_metadataFiles() {
                }
            }
         }
-    }
-
-    if (error) {
-        // TODO insert metadataString as aff4 image if invalid rdf file
     }
 
     std::cout << "                Metadata integration : Successfully finished\n";
@@ -950,10 +936,12 @@ AFF4Status BasicImager::handle_hash() {
 
     // Iterates over each valid urn
     for (const URN& export_urn : urns) {
+
         std::vector<std::string> components{ export_dir, export_urn.Domain() };
         for (auto& c : break_path_into_components(export_urn.Path())) {
             components.push_back(escape_component(c));
         }
+
 
         // Prepend the domain (AFF4 volume) to the export directory to
         // make sure the exported stream is unique.
@@ -989,9 +977,7 @@ AFF4Status BasicImager::handle_hash() {
             std::cerr << "               MD5 hash verification : For file " << urn_string << " hash code NOT found in metadata!" << "\n";
             failedVerificationNotifier = true;
         }       
-        else if (MD5MetaString.find(MD5) != std::string::npos) {
-            failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
-        }
+        else if (MD5MetaString.find(MD5) != std::string::npos) {}
         else {
             std::cerr << "               MD5 hash verification : For file " << urn_string << " hash codes NOT equal!" << "\n";
             failedVerificationNotifier = true;
@@ -1017,9 +1003,7 @@ AFF4Status BasicImager::handle_hash() {
             std::cerr << "              SHA1 hash verification : For file " << urn_string << " hash code NOT found in metadata!" << "\n";
             failedVerificationNotifier = true;
         }
-        else if (SHA1MetaString.find(SHA1) != std::string::npos) {
-            failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
-        }
+        else if (SHA1MetaString.find(SHA1) != std::string::npos) {}
         else {
             std::cerr << "              SHA1 hash verification : For file " << urn_string << " hash codes NOT equal!" << "\n";
             failedVerificationNotifier = true;
@@ -1045,16 +1029,14 @@ AFF4Status BasicImager::handle_hash() {
             std::cerr << "            SHA256 hash verification : For file " << urn_string << " hash code NOT found in metadata!" << "\n";
             failedVerificationNotifier = true;
         }
-        else if (SHA256MetaString.find(SHA256) != std::string::npos) {
-            failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
-        }
+        else if (SHA256MetaString.find(SHA256) != std::string::npos) {}
         else {
             std::cerr << "            SHA256 hash verification : For file " << urn_string << " hash codes NOT equal!" << "\n";
             failedVerificationNotifier = true;
         }
 
-        // TODO error treatment
-        if (std::remove(output_filename.c_str()) != 0) failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
+
+        if (std::remove(output_filename.c_str()) != 0) {}
 
         if (failedVerificationNotifier) failedVerifications++;
 
@@ -1159,7 +1141,6 @@ AFF4Status BasicImager::handle_exportAll() {
             counterFailedExtractions++;
             continue;
         }
-
       
         // Prepend the domain (AFF4 volume) to the export directory to
         // make sure the exported stream is unique.
@@ -1285,7 +1266,7 @@ AFF4Status BasicImager::process_temp() {
         FileNameString.append("\\");
         FileNameString.append(FindFileData.cFileName);
 
-        // TODO FILTER OUT ".." and "." at last position in FileNameString
+        // FILTER OUT ".." and "." at last position in FileNameString
         if (FileNameString.find('.') != FileNameString.size() - 1 && FileNameString.find('.') != FileNameString.size() - 2 && FileNameString.find("..") != FileNameString.size() - 2) {
             if (remove(FileNameString.c_str()) != 0) {
 
@@ -1294,8 +1275,7 @@ AFF4Status BasicImager::process_temp() {
                     // Replace current tempRecursive with next Directory if not already equal and if not file
                     if (tempRecursive.compare(FileNameString) != 0 && tempRecursive.find('.') == std::string::npos ) {
                         tmp = tempRecursive;
-                        tempRecursive = FileNameString;
-                        
+                        tempRecursive = FileNameString;                        
                         process_temp();
                       
                         // Reset tempRecursive
@@ -1319,8 +1299,7 @@ AFF4Status BasicImager::process_temp() {
     
     if (dwError != ERROR_NO_MORE_FILES)
     {
-        //printf("FindNextFile error. Error is %u\n", dwError);
-        //return (-1);
+
         std::cerr << "                      Temp directory : NOT successfully emptied " << dwError << "\n";
         std::cout << "                      Temp directory : NOT successfully emptied " << dwError << "\n";
     }
@@ -1333,7 +1312,6 @@ AFF4Status BasicImager::process_temp() {
     
     return CONTINUE;
 }
-
 
 AFF4Status BasicImager::GetNextPart() {
     output_volume_part ++;

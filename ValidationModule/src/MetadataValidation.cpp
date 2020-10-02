@@ -131,6 +131,7 @@ bool IsValidMetadataFileArtifactModule(std::vector<std::vector<std::string>> fil
 	artifactEntries = findDirectoryEntries(path);
 	std::vector<std::string> artifactEntriesRec = artifactEntries;
 
+
 	// Find all sample entries and compare them with metadata entries
 	for (std::string entry : artifactEntriesRec) {
 		
@@ -143,8 +144,9 @@ bool IsValidMetadataFileArtifactModule(std::vector<std::vector<std::string>> fil
 			tmpPath = path;
 			tmpPath.append("\\");
 			tmpPath.append(entry);		
-					
+			
 			std::vector <std::string>tmp = findDirectoryEntries(tmpPath);
+			
 			artifactEntries.insert(artifactEntries.end(), tmp.begin(), tmp.end());
 			
 			int counterMetadataNotFound = 0;
@@ -152,7 +154,6 @@ bool IsValidMetadataFileArtifactModule(std::vector<std::vector<std::string>> fil
 			
 			// Check if all artifact entries from sample {entry} have metadata entries
 			for (std::string sampleEntry : tmp) {
-				
 				std::string tmpEntry = entry;
 				tmpEntry.append("\\");
 				tmpEntry.append(sampleEntry);
@@ -161,8 +162,7 @@ bool IsValidMetadataFileArtifactModule(std::vector<std::vector<std::string>> fil
 				if (std::find(artifactMetadataEntries.begin(), artifactMetadataEntries.end(), tmpEntry) == artifactMetadataEntries.end()) {
 					counterMetadataNotFound++;
 
-					std::cerr << "  ArtifactModule metadata validation : In Sample " << entry << " metadata for " << tmpEntry << " NOT found!" << "\n";
-
+					std::cerr << "\n  ArtifactModule metadata validation : In Sample " << entry << " metadata-entry for artifact " << sampleEntry << " NOT found!" << "\n";					
 				}
 			}
 
@@ -170,6 +170,7 @@ bool IsValidMetadataFileArtifactModule(std::vector<std::vector<std::string>> fil
 			std::string metadataEntryFilename;
 			
 			for (std::string metadataEntry : artifactMetadataEntries) {
+
 				// Check if {entry} is the correct sample for metadataEntry 
 				if (metadataEntry.find(entry) != std::string::npos) {
 					
@@ -179,8 +180,7 @@ bool IsValidMetadataFileArtifactModule(std::vector<std::vector<std::string>> fil
 					if (std::find(artifactEntries.begin(), artifactEntries.end(), metadataEntryFilename) == artifactEntries.end()) {
 						counterArtifactNotFound++;
 
-						std::cerr << "  ArtifactModule metadata validation : In Sample " << entry << " artifact for " << metadataEntryFilename << " NOT found!" << "\n";
-
+						std::cerr << "  ArtifactModule metadata validation : In Sample " << entry << " artifact for metadata-entry " << metadataEntryFilename << " NOT found!" << "\n\n";	
 					}
 				}
 			}
@@ -240,6 +240,7 @@ std::vector<std::string> findDirectoryEntries(std::string path) {
 				&& tmp != "."
 				&& tmp != "..") {
 				entries.push_back(tmp);
+
 			}
 		} while (FindNextFile(hFind, &data) != 0);
 		FindClose(hFind);

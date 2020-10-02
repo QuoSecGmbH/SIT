@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     SYSTEMTIME start, end;
     GetSystemTime(&start);
 
-    std::string version = "v0.5";
+    std::string version = "v1.0";
 
     std::cerr << "SIT ValidationModule "<<version<<"\n\n";
     std::cout << "SIT ValidationModule " << version << "\n\n";
@@ -137,10 +137,10 @@ int main(int argc, char* argv[]) {
     std::string newPathLog = cwd;
     oldPathLog.append("/ArtifactModule.log");
     newPathLog.append("/ArtifactModuleLog.txt");
+
     if (rename(oldPathLog.c_str(), newPathLog.c_str()) != 0) {
         std::cerr << "                    ValidationModule : File " << "ArtifactModule.log" << " in temp directory NOT successfully moved from "<< oldPathLog.c_str() <<" to "<< newPathLog.c_str() <<" !\n";
     }
-
 
     std::cerr << "                    ValidationModule : Successfully finished reordering files in temp directory\n";
 

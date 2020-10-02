@@ -1,6 +1,6 @@
 --- aff4/aff4_imager_utils.cc	Tue Aug 20 14:42:42 2019
-+++ aff4/aff4_imager_utils.cc	Sun Sep 27 23:39:06 2020
-@@ -1,16 +1,57 @@
++++ aff4/aff4_imager_utils.cc	Fri Oct  2 01:04:10 2020
+@@ -1,19 +1,58 @@
  /*
 +  Modifications and additions as part of the SIT AFF4Module https://github.com/QuoSecGmbH/SIT, by Fabian Faust
 +*/
@@ -34,7 +34,8 @@
 +{
 +    return std::tolower(a) == std::tolower(b);
 +}
-+
+ 
+-namespace aff4 {
 +// Source: https://stackoverflow.com/questions/23943728/case-insensitive-standard-string-comparison-in-c
 +bool icompare(std::string const& a, std::string const& b)
 +{
@@ -46,19 +47,20 @@
 +        return false;
 +    }
 +}
-+
+ 
 +void convertUpperCase(std::string& str) {
-+    //const char* array = str.c_str();
 +    int counter = 0;
 +    for (char c : str) {
 +        str[counter] = std::toupper(c);
 +            counter++;
 +    }
 +}
++
++namespace aff4 {
  
- namespace aff4 {
- 
-@@ -40,6 +81,64 @@
+ AFF4Status ExtractStream(
+     DataStore& resolver, VolumeGroup &volumes,
+@@ -40,6 +79,64 @@
      return out_stream->WriteStream(in_stream.get(), &progress);
  }
  
@@ -123,7 +125,7 @@
  
  // A Progress indicator which keeps tabs on the size of the output volume.
  // This is used to support output volume splitting.
-@@ -80,9 +179,6 @@
+@@ -80,9 +177,6 @@
      for (auto stream: streams) {
          stream->SwitchVolume(new_volume);
      }
@@ -133,7 +135,7 @@
      return true;
  }
  
-@@ -133,6 +229,10 @@
+@@ -133,6 +227,10 @@
          return INCOMPATIBLE_TYPES;
      }
  
@@ -144,7 +146,7 @@
      if (result == CONTINUE) {
          result = parse_input();
      }
-@@ -152,6 +252,10 @@
+@@ -152,6 +250,10 @@
                                max_output_volume_file_size);
      }
  
@@ -155,7 +157,7 @@
      return result;
  }
  
-@@ -170,10 +274,26 @@
+@@ -170,10 +272,26 @@
          result = handle_export();
      }
  
@@ -182,7 +184,7 @@
      return result;
  }
  
-@@ -278,6 +398,8 @@
+@@ -278,6 +396,8 @@
      for (const auto& input: GetArg<TCLAP::MultiArgToNextFlag>("input")->getValue()) {
          // Read input files from stdin - this makes it easier to support
          // files with spaces and special shell chars in their names.
@@ -191,7 +193,7 @@
          if (input == "@") {
              for(std::string line;;) {
                  std::getline (std::cin, line);
-@@ -285,6 +407,8 @@
+@@ -285,6 +405,8 @@
                  inputs.push_back(line);
              }
          } else {
@@ -200,7 +202,7 @@
              inputs.push_back(input);
          }
      }
-@@ -293,103 +417,783 @@
+@@ -293,103 +415,766 @@
  }
  
  AFF4Status BasicImager::process_input() {
@@ -210,7 +212,9 @@
 +    std::cerr << "                Artifact integration : Start\n";
 +    
 +    genericMetafilename = "genericMETA.turtle";
-+    std::string inputForwardSlash; // temporary string to compare paths independently of slash changes by GlobFilename()
++
++    // temporary string to compare paths independently of slash changes by GlobFilename()
++    std::string inputForwardSlash; 
 +  
 +    int counter = 0;
 +    int counterNonArtifactFiles = 0;
@@ -223,16 +227,15 @@
 +            std::replace(inputForwardSlash.begin(), inputForwardSlash.end(), '\\', '/');
 +
 +            // Appends genericMetafilename to metadataFiles if found in input and not already in metadataFiles -> process_metadataFiles() will run next
-+            if ((inputForwardSlash.find(genericMetafilename) != std::string::npos) ) { // TODO && (std::find(metadataFiles.begin(), metadataFiles.end(), genericMetafilename) != metadataFiles.end()) == false
++            if ((inputForwardSlash.find(genericMetafilename) != std::string::npos) ) { 
 +                metadataFiles.push_back(inputForwardSlash);
 +                counter--;
-+                // What if genericMetafilename specified by -m ?? TODO FIX !!
 +            }
  
 -            // Check if the volume needs to be split.
 -            VolumeManager(&resolver, this).MaybeSwitchVolumes();
 +            if (((std::find(metadataFiles.begin(), metadataFiles.end(), inputForwardSlash) != metadataFiles.end())==false) && (inputForwardSlash.find(genericMetafilename)!= std::string::npos)==false )
-+            {  // TODO if genericMETA.rdf without -m -> call metaHandler for this input, -> see above!
++            { 
 +                                
 +                // Check if the volume needs to be split.
 +                VolumeManager(&resolver, this).MaybeSwitchVolumes();
@@ -438,9 +441,9 @@
 +    std::cout << "                Artifact integration : Successfully finished\n";
 +    std::cerr << "                Artifact integration : Successfully finished\n";
 +
-     return CONTINUE;
- }
- 
++    return CONTINUE;
++}
++
 +AFF4Status BasicImager::parse_metadataFiles() {
 +
 +    for (const auto& input : GetArg<TCLAP::MultiArgToNextFlag>("metadata")->getValue()) {
@@ -457,9 +460,6 @@
 +
 +    std::cout << "                Metadata integration : Start\n";
 +    std::cerr << "                Metadata integration : Start\n";
-+    
-+    // Set if unsuccessful processing of metadataFile. Will cause the metadataFile to be included in image as file.
-+    bool error = false;
 +
 +    for (std::string glob : metadataFiles) {
 +        
@@ -470,9 +470,7 @@
 +            // Reads in metadataFile as String
 +            std::ifstream t(metadataFile);
 +            std::string metadataFileString((std::istreambuf_iterator<char>(t)),
-+            std::istreambuf_iterator<char>());
-+                                             
-+            // TODO REVIEW INPUT SECURITY E.G STRINGS                   
++            std::istreambuf_iterator<char>());                 
 +
 +           // Serialize metadataFileString and set in information.turtle                     
 +           unsigned int prefixCounter = 0;
@@ -515,7 +513,6 @@
 +           else {
 +               std::cout << "                      Metadata input : NOT valid!\n";
 +               std::cerr << "                      Metadata input : NOT valid!\n";
-+               // TODO reaction
 +           }
 +
 +           //Remove empty lines
@@ -534,10 +531,10 @@
 +           bool warningArtificalDelimiter = false; // Set if artifical delimiter is set
 +           URN imageURN;
 +           URN attributeURN;
-+           URN testURN; // TODO remove
++           URN testURN; 
 +           
 +           //Check for </path/to/file> 
-+                // Append metadata attributes to each file in information.turtle
++           // Append metadata attributes to each file in information.turtle
 +           while (metadataFileString.find(eof_signal) == std::string::npos) {
 +               
 +               // Check for <..> statement              
@@ -560,7 +557,7 @@
 +                           //Appending metadata from filePath
 +                           
 +                           // Check for next filePath delimiter as end limit for this metadata section
-+                           // if no startDelimiter left in file, append artifical one TODO remove
++                           // if no startDelimiter left in file, append artifical one 
 +                           startDelimiterPos = metadataFileString.find(startDelimiter);
 +                           if (startDelimiterPos == std::string::npos) {
 +                               metadataFileString.append(startDelimiter);
@@ -581,7 +578,6 @@
 +                           // Appends metadata if information.turtle includes the required file
 +                           if (resolver.HasURN(attributeURN)) {
 +                               
-+                               // TODO CHECK BEHAVIOR IF ATTRIBUTES IN WRONG ORDER IN METADATA TURTLE
 +                               std::vector <std::string> aff4Types = {"ComputerName",
 +                                   "VolumeID",
 +                                   "ParentFRN",
@@ -631,7 +627,6 @@
 +                                           startPosition = metadataSection.find(AFF4Type);
 +
 +                                           // Contains metadataSection substring beginning with AFF4Type 
-+
 +                                           metadataSubstr = metadataSection.substr(startPosition);
 +
 +                                           // Contains the metadata
@@ -692,7 +687,7 @@
 +                                           if (aff4Type == "SSDeep") resolver.Set(testURN, AFF4_STREAM_SSDEEP, new XSDString(metadataFiltered), true); 
 +                                           if (aff4Type == "TLSH") resolver.Set(testURN, AFF4_STREAM_TLSH, new XSDString(metadataFiltered), true); 
 +                                           if (aff4Type == "YaraRules") resolver.Set(testURN, AFF4_STREAM_YARARULES, new XSDString(metadataFiltered), true); 
-+                                           //else resolver.Set(testURN, AFF4_STREAM_UNKNOWN, new XSDString(metadataFiltered), true); 
++
 +                                       }
 +                               }                                                                        
 +                           }                                                                                                                           
@@ -702,7 +697,6 @@
 +                               std::cout << "                Metadata integration : Metadata entry "<< attributeURN.SerializeToString().c_str() <<" NOT found in image!"<<"\n";
 +                               std::cerr << "                Metadata integration : Metadata entry " << attributeURN.SerializeToString().c_str() << " NOT found in image!" << "\n";
 +              
-+                               error = true;
 +                           }
 +                                                     
 +                           // remove section from metadataFileString -> Replace with attribute remove loop 
@@ -731,10 +725,6 @@
 +               }
 +           }
 +        }
-+    }
-+
-+    if (error) {
-+        // TODO insert metadataString as aff4 image if invalid rdf file
 +    }
 +
 +    std::cout << "                Metadata integration : Successfully finished\n";
@@ -816,10 +806,12 @@
 +
 +    // Iterates over each valid urn
 +    for (const URN& export_urn : urns) {
++
 +        std::vector<std::string> components{ export_dir, export_urn.Domain() };
 +        for (auto& c : break_path_into_components(export_urn.Path())) {
 +            components.push_back(escape_component(c));
 +        }
++
 +
 +        // Prepend the domain (AFF4 volume) to the export directory to
 +        // make sure the exported stream is unique.
@@ -855,9 +847,7 @@
 +            std::cerr << "               MD5 hash verification : For file " << urn_string << " hash code NOT found in metadata!" << "\n";
 +            failedVerificationNotifier = true;
 +        }       
-+        else if (MD5MetaString.find(MD5) != std::string::npos) {
-+            failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
-+        }
++        else if (MD5MetaString.find(MD5) != std::string::npos) {}
 +        else {
 +            std::cerr << "               MD5 hash verification : For file " << urn_string << " hash codes NOT equal!" << "\n";
 +            failedVerificationNotifier = true;
@@ -883,9 +873,7 @@
 +            std::cerr << "              SHA1 hash verification : For file " << urn_string << " hash code NOT found in metadata!" << "\n";
 +            failedVerificationNotifier = true;
 +        }
-+        else if (SHA1MetaString.find(SHA1) != std::string::npos) {
-+            failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
-+        }
++        else if (SHA1MetaString.find(SHA1) != std::string::npos) {}
 +        else {
 +            std::cerr << "              SHA1 hash verification : For file " << urn_string << " hash codes NOT equal!" << "\n";
 +            failedVerificationNotifier = true;
@@ -911,16 +899,14 @@
 +            std::cerr << "            SHA256 hash verification : For file " << urn_string << " hash code NOT found in metadata!" << "\n";
 +            failedVerificationNotifier = true;
 +        }
-+        else if (SHA256MetaString.find(SHA256) != std::string::npos) {
-+            failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
-+        }
++        else if (SHA256MetaString.find(SHA256) != std::string::npos) {}
 +        else {
 +            std::cerr << "            SHA256 hash verification : For file " << urn_string << " hash codes NOT equal!" << "\n";
 +            failedVerificationNotifier = true;
 +        }
 +
-+        // TODO error treatment
-+        if (std::remove(output_filename.c_str()) != 0) failedVerificationNotifier = failedVerificationNotifier; // TODO REPLACE
++
++        if (std::remove(output_filename.c_str()) != 0) {}
 +
 +        if (failedVerificationNotifier) failedVerifications++;
 +
@@ -944,9 +930,9 @@
 +    std::cout << "                   Hash verification : Successfully finished\n";
 +    std::cerr << "                   Hash verification : Successfully finished\n";
 +
-+    return CONTINUE;
-+}
-+
+     return CONTINUE;
+ }
+ 
 +// Export all artifacts in container 
 +AFF4Status BasicImager::handle_exportAll() {
 +    
@@ -1025,7 +1011,6 @@
 +            counterFailedExtractions++;
 +            continue;
 +        }
-+
 +      
 +        // Prepend the domain (AFF4 volume) to the export directory to
 +        // make sure the exported stream is unique.
@@ -1063,7 +1048,7 @@
  AFF4Status BasicImager::handle_export() {
      if (Get("output")->isSet()) {
          resolver.logger->error(
-@@ -451,6 +1255,85 @@
+@@ -451,6 +1236,82 @@
      return CONTINUE;
  }
  
@@ -1097,7 +1082,7 @@
 +        FileNameString.append("\\");
 +        FileNameString.append(FindFileData.cFileName);
 +
-+        // TODO FILTER OUT ".." and "." at last position in FileNameString
++        // FILTER OUT ".." and "." at last position in FileNameString
 +        if (FileNameString.find('.') != FileNameString.size() - 1 && FileNameString.find('.') != FileNameString.size() - 2 && FileNameString.find("..") != FileNameString.size() - 2) {
 +            if (remove(FileNameString.c_str()) != 0) {
 +
@@ -1106,8 +1091,7 @@
 +                    // Replace current tempRecursive with next Directory if not already equal and if not file
 +                    if (tempRecursive.compare(FileNameString) != 0 && tempRecursive.find('.') == std::string::npos ) {
 +                        tmp = tempRecursive;
-+                        tempRecursive = FileNameString;
-+                        
++                        tempRecursive = FileNameString;                        
 +                        process_temp();
 +                      
 +                        // Reset tempRecursive
@@ -1131,8 +1115,7 @@
 +    
 +    if (dwError != ERROR_NO_MORE_FILES)
 +    {
-+        //printf("FindNextFile error. Error is %u\n", dwError);
-+        //return (-1);
++
 +        std::cerr << "                      Temp directory : NOT successfully emptied " << dwError << "\n";
 +        std::cout << "                      Temp directory : NOT successfully emptied " << dwError << "\n";
 +    }
@@ -1145,11 +1128,10 @@
 +    
 +    return CONTINUE;
 +}
-+
  
  AFF4Status BasicImager::GetNextPart() {
      output_volume_part ++;
-@@ -514,7 +1397,8 @@
+@@ -514,7 +1375,8 @@
                                         output_volume_part);
          }
  

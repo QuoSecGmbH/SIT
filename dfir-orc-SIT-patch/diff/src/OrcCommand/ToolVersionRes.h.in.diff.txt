@@ -1,5 +1,5 @@
 --- src/OrcCommand/ToolVersionRes.h.in	Thu Mar 19 12:16:24 2020
-+++ src/OrcCommand/ToolVersionRes.h.in	Sat Sep 26 15:23:38 2020
++++ src/OrcCommand/ToolVersionRes.h.in	Thu Oct  1 22:25:10 2020
 @@ -25,7 +25,10 @@
  #define ORC_FILEVER_STRINGW ORC_VERSION_STRINGW
  #define ORC_PRODUCTVER_STRINGW ORC_VERSION_STRINGW
@@ -12,5 +12,5 @@
 +//#define ORC_META_NAME_STRINGW L"@ORC_META_NAME@"
 +//#define ORC_META_VERSION_STRINGW L"@ORC_META_VERSION@"
 +#define ORC_META_NAME_STRINGW L"SIT"
-+#define ORC_META_VERSION_STRINGW L"v0.4"
++#define ORC_META_VERSION_STRINGW L"v1.0"
 \ No newline at end of file

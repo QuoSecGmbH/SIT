@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
     bool verificationModule = false;
     bool extraction = false;
     std::vector<std::string> args(argv, argv + argc);
-    std::string version = "v0.6";
+    std::string version = "v1.0";
 
     for (size_t i = 1; i < args.size(); ++i) {
         if (args[i] == "--hash") {

@@ -54,7 +54,6 @@ std::vector<std::vector<std::string>> MainValidation(std::vector<std::string>Too
 		return FailedValidations;
 	}
 
-
 	unsigned int counter = 0;
 	for (std::string Tool : ToolsToValidate) {
 		if (Tool == "ArtifactModule") {
@@ -102,7 +101,7 @@ std::vector<std::vector<std::string>> MainValidation(std::vector<std::string>Too
 std::vector<std::string> ArtifactModuleValidation(std::vector<std::string>& samples) {
 	
 	/* Holds the metdatafile name with identifiers (<{metadatafile}.csv>) if not found, without identifiers {metadatafile}.csv if found, as well as the name of each sample 
-		Example output: "GetThis.csv""sample1""<sample2>" 
+		Example output: "ArtifactModule.csv""sample1""<sample2>" 
 		Metadata file was found and valid, sample1 directory was found, sample 2 directory was not found
 	*/
 	std::vector<std::string> output;
@@ -130,7 +129,6 @@ std::vector<std::string> ArtifactModuleValidation(std::vector<std::string>& samp
 		output.push_back("<" + metadataName + ">");
 		std::cout << "             Metadata file NOT found : "<< metadataName<<"\n";
 		std::cerr << "             Metadata file NOT found : " << metadataName << "\n";
-		//std::cout << "metadataName file " << metadataName << " was NOT found in GetThisVerification with Path: " << ORCOutputDirectoryPath << "\n";
 	}
 	else { // Validation if metadata csv file contains valid metadata
 		
@@ -196,7 +194,6 @@ std::vector<std::string> ArtifactModuleValidation(std::vector<std::string>& samp
 			std::cerr << " Sample directory NOT found for sample : " << sample << "\n";
 		}		
 	}
-
 	// Returns vector with sections for each sample, with either its missing files or identifiers to signal missing sample directory
 	return output;
 }

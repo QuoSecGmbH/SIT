@@ -143,10 +143,9 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 				counter++;
 				continue;
 			}
-			//if (counter >= 1) {
+
 				// Adds one empty line between each file 
 				turtleStream << "\n";
-
 				pathIdentifier = pathIdentifierGeneric;
 
 				// Contains the path to the file itself without sample folder, without the " " symbols
@@ -167,11 +166,7 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 				pathIdentifier.append(">");
 
 				// Add pathIdentifier for file
-				turtleStream << pathIdentifier << "\n\n";
-				
-			//}
-			
-			//if (counter >= 1) {
+				turtleStream << pathIdentifier << "\n\n";			
 
 				// Index for each individual element of file
 				int elementCounter = 0;
@@ -191,11 +186,9 @@ bool insertIntoTurtle(std::vector<std::vector<std::vector<std::string>>> metadat
 
 					elementCounter++;
 				}
-			//}
 			counter++;		
 		}
 	}
-
 	// Close turtle stream
 	turtleStream.close();
 	return true;

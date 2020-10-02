@@ -1,5 +1,5 @@
 --- aff4/aff4imager.cc	Tue Aug 20 14:42:42 2019
-+++ aff4/aff4imager.cc	Wed Sep 23 00:12:36 2020
++++ aff4/aff4imager.cc	Thu Oct  1 12:35:34 2020
 @@ -14,22 +14,148 @@
  */
  
@@ -27,7 +27,7 @@
 +    bool verificationModule = false;
 +    bool extraction = false;
 +    std::vector<std::string> args(argv, argv + argc);
-+    std::string version = "v0.6";
++    std::string version = "v1.0";
 +
 +    for (size_t i = 1; i < args.size(); ++i) {
 +        if (args[i] == "--hash") {
