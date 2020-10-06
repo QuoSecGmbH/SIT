@@ -29,11 +29,11 @@
 
 **How to use**
 1. Follow instructions in INSTALL to compile and configure
-2. Move SIT.exe into target directory! For Forensic Soundness use external flash drive to execute SIT from.
+2. Move SIT.exe into the work directory! For Forensic Soundness use external flash drive to execute SIT from.
 3. Use the command line to execute SIT (Admin rights required!)
 4. A temporary directory will be created at the same path, to avoid using the Windows default temp directory outside the flash drive.
 5. The AFF4 image, the backup and statistic archives, as well as log files are created in the same directory.
-6. (Optional) Disable different modules by using /key= to set a specifi module, /key-= to disable a single module or archive from being executed or /key+= to add a non default module/archive to execution.
+6. (Optional) Disable different modules by using /key= to set a specific module, /key-= to disable a single module or archive from being executed or /key+= to add a non default module/archive to execution.
 7. (Optional) Extract all artifacts to the current directory of the SIT.exe. A custom folder will be created and for every artifact the original directory and name is restored, if available in the metadata. The functionality is available in a separate optional archive. Activate with /key=ImageExtract
 
 **DFIR ORC Documentation**
