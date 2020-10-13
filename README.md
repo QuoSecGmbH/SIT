@@ -2,24 +2,23 @@
 **Selective Imaging Tool**
 
 **Features:** 
-1. Framework for file system level Selective Imaging on live Windows systems.
-2. Maintain forensic soundness by targeting challenges specific for live system forensics
-	1. Standalone validation check to identify unexpected or manipulated output
-	2. Usage of AFF4 forensic format to facilitate direct artifact-metadata set association	
-	3. Standalone verification check to verify artifact integrity
-	4. Extensive live user feedback and logging to allow appropriate reaction
-	5. Extensive error handling and logging to ensure reliable output 
-	6. Artifact backup archive to create redundancy	
-	7. Avoid writing files outside of binary directory if possible -> external flash drive usage adviced
-	8. Minimize footprint, maximize efficiency
-	9. Minimize usage of external libraries due to portable nature and to avoid dependency on static libraries
-3. Modularity 
-	1. Any module can be disabled, replaced or run separately
-	2. Custom executables can be added 
-	3. Minimal changes to DFIR ORC framework to maintain compatibility
+1. Tool for file system level Selective Imaging on live Windows systems.
+2. Maintain forensic soundness by targeting challenges specific to live system forensics
+	1. Portable execution from a flash drive and usage of a custom temporary directory to minimize source     	     corruption
+	2. Backup archive to replace corrupted artifacts
+	3. Validation to identify unexpected or manipulated output
+	4. Usage of AFF4 forensic format to facilitate direct artifact-metadata set association	using unique 		   identifiers
+	5. Verification using MD5, SHA1 and SHA256 hash codes to check artifact data integrity
+	6. Extensive console user feedback and logging 
+	7. Reliable error handling 	
+3. Modularity
+	1. Four main modules intended to run sequentially
+	2. Any module can be disabled, replaced or run separately
+	3. Custom executables can be added 
+	4. Minimal changes to DFIR ORC framework to maintain compatibility
 
 **How it works** 
-1. Creation of one single configured portable binary without external dependencies, based on DFIR ORC framework (https://github.com/DFIR-ORC/dfir-orc). 
+1. Creation of one single configured portable binary without external dependencies, based on DFIR ORC framework (https://github.com/DFIR-ORC/dfir-orc). Note: Currently DFIR ORC is not using the custom temporary directory, only the Validation, AFF4 and Verification Modules do. Full support for a custom temporary directory while intended, should be introduced by the DFIR ORC developers to maintain compatibility for future versions 
 2. File artifacts collected by a modified version of the GetThis DFIR ORC tool **[ArtifactModule]**. Modifications focused on extended documentation and user feedback for forensic soundness.
 3. Extensive validation to detect unexpected or manipulated output. Conversion of metadata from CSV to RDF format for next step **[ValidationModule]**.
 4. Storage in forensic AFF4 format with central metadata registry for each artifact **[AFF4Module]**.
@@ -29,7 +28,7 @@
 
 **How to use**
 1. Follow instructions in INSTALL to compile and configure
-2. Move SIT.exe into the work directory! For Forensic Soundness use external flash drive to execute SIT from.
+2. Move SIT.exe into the work directory. For forensic soundness use external flash drive to execute SIT from.
 3. Use the command line to execute SIT (Admin rights required!)
 4. A temporary directory will be created at the same path, to avoid using the Windows default temp directory outside the flash drive.
 5. The AFF4 image, the backup and statistic archives, as well as log files are created in the same directory.
@@ -48,8 +47,7 @@ Source: https://dfir-orc.github.io/GetThis.html
 **ArtifactModule**
 - Based on GetThis ORC tool
 - Expanded tool documentation
-- Expanded tool feedback to examiner on execution 
-- Reviewed Forensic Soundness aspects 
+- Expanded tool feedback to user on execution 
 
 **ValidationModule:** 
 - Extensive validation to detect unexpected or manipulated output.
